@@ -1,0 +1,1658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ShowFlow — Events, Randomizer & Signups (Single-File)</title>
+  <meta name="description" content="All-in-one, single-file event manager for open mics, comedy shows, raffles, and random drawings. Admin + Participant dashboards, QR signups, files, messages, analytics." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='128' height='128' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.5'%3E%3Cpath d='M4 4h16v16H4z'/%3E%3Cpath d='M7 7h10v3H7zM7 12h10v5H7z'/%3E%3C/svg%3E" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    html, body { height: 100%; }
+    .glass { backdrop-filter: blur(8px); background: rgba(255,255,255,0.8); }
+    .btn { display:inline-flex; align-items:center; justify-content:center; padding:.5rem .75rem; border:1px solid #d1d5db; border-radius:.75rem; font-weight:500; transition: box-shadow .2s, border-color .2s, background .2s; }
+    .btn:hover { box-shadow:0 1px 2px rgba(0,0,0,.06); border-color:#9ca3af; }
+    .btn-primary { background:#000; color:#fff; border-color:#000; }
+    .btn-primary:hover { background:#111827; }
+    .btn-danger { background:#dc2626; color:#fff; border-color:#b91c1c; }
+    .btn-danger:hover { background:#b91c1c; }
+    .card { border:1px solid #e5e7eb; border-radius:1rem; padding:1rem; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,.03); }
+    .grid-2 { display:grid; grid-template-columns:1fr; gap:1rem; }
+    .grid-3 { display:grid; grid-template-columns:1fr; gap:1rem; }
+    @media (min-width:768px) { .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))} .grid-3{grid-template-columns:repeat(3,minmax(0,1fr))} }
+    .pill { border:1px solid #e5e7eb; border-radius:9999px; padding:.125rem .5rem; font-size:.75rem; font-weight:600; }
+    .tab { padding:.5rem .75rem; border:1px solid #e5e7eb; border-radius:.75rem; }
+    .tab-active { background:#000; color:#fff; border-color:#000; }
+    .input { width:100%; border:1px solid #e5e7eb; border-radius:.75rem; padding:.5rem .75rem; outline:none; }
+    .input:focus { box-shadow:0 0 0 2px #0002; border-color:#000; }
+    .label { font-size:.75rem; font-weight:700; color:#6b7280; }
+    .table { width:100%; font-size:.875rem; border-collapse:collapse; }
+    .table th { text-align:left; color:#6b7280; font-weight:600; border-bottom:1px solid #e5e7eb; padding:.5rem .25rem; }
+    .table td { border-bottom:1px solid #f3f4f6; padding:.5rem .25rem; }
+    .kbd { display:inline-block; border:1px solid #e5e7eb; border-radius:.375rem; padding:0 .25rem; font-size:.75rem; background:#f9fafb; }
+    .divider { height:1px; background:#e5e7eb; margin:1rem 0; }
+    .hidden { display:none !important; }
+  </style>
+</head>
+<body class="min-h-full bg-gradient-to-br from-gray-50 to-gray-100 text-gray-900">
+  <!-- Header -->
+  <header class="sticky top-0 z-40 bg-white/80 backdrop-blur border-b">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-lg bg-black text-white grid place-items-center font-bold">SF</div>
+        <div class="font-semibold">ShowFlow</div>
+      </div>
+      <nav class="ml-auto flex items-center gap-2">
+        <button id="navAdmin" class="tab">Admin</button>
+        <button id="navParticipant" class="tab">Participant</button>
+        <span class="text-gray-400">|</span>
+        <button id="navExport" class="tab" title="Export all data">Export</button>
+        <label class="tab cursor-pointer" title="Import a previously exported JSON">
+          <input id="importInput" type="file" accept="application/json" class="hidden" />
+          Import
+        </label>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto p-4 space-y-6">
+    <!-- System banners -->
+    <div id="banner" class="hidden p-3 rounded-xl border bg-amber-50 text-amber-800"></div>
+
+    <!-- Admin Auth -->
+    <section id="viewAdminAuth" class="card">
+      <div class="grid-2">
+        <div>
+          <h2 class="text-xl font-bold">Admin Sign In</h2>
+          <p class="text-sm text-gray-600 mb-3">Welcome back. Authenticate to manage events.</p>
+          <div class="space-y-2">
+            <div>
+              <label class="label">Email</label>
+              <input id="loginEmail" type="email" class="input" placeholder="you@show.com" />
+            </div>
+            <div>
+              <label class="label">Password</label>
+              <input id="loginPassword" type="password" class="input" placeholder="••••••••" />
+            </div>
+            <button id="btnLogin" class="btn btn-primary w-full">Sign In</button>
+            <p class="text-xs text-gray-500">Demo credentials auto-provisioned: <span class="kbd">admin@demo.app</span> / <span class="kbd">demo123</span></p>
+          </div>
+        </div>
+        <div>
+          <h2 class="text-xl font-bold">Create Admin</h2>
+          <p class="text-sm text-gray-600 mb-3">Spin up a new organizer account.</p>
+          <div class="space-y-2">
+            <div>
+              <label class="label">Email</label>
+              <input id="signupEmail" type="email" class="input" placeholder="organizer@yourbrand.com" />
+            </div>
+            <div>
+              <label class="label">Password</label>
+              <input id="signupPassword" type="password" class="input" placeholder="choose a strong password" />
+            </div>
+            <button id="btnSignup" class="btn w-full">Create Account</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Admin App shell -->
+    <section id="viewAdminApp" class="hidden">
+      <div class="grid-3">
+        <div class="card">
+          <div class="flex items-center justify-between">
+            <h3 class="font-semibold">Create New Event</h3>
+            <span id="activeAdminEmail" class="text-xs text-gray-500"></span>
+          </div>
+          <div class="divider"></div>
+          <!-- Wizard -->
+          <div id="wizard" class="space-y-3">
+            <div class="grid-2">
+              <div>
+                <label class="label">Event Name</label>
+                <input id="evName" class="input" placeholder="Open Mic Night — Harrisburg" />
+              </div>
+              <div>
+                <label class="label">Date & Time</label>
+                <input id="evDate" type="datetime-local" class="input" />
+              </div>
+            </div>
+            <div>
+              <label class="label">Venue</label>
+              <input id="evVenue" class="input" placeholder="Main Street Club, Harrisburg PA" />
+            </div>
+            <div>
+              <label class="label">Rules / Notes</label>
+              <textarea id="evRules" class="input" rows="3" placeholder="5-min sets • family-friendly • bring your own backing track"></textarea>
+            </div>
+            <div class="grid-3">
+              <div>
+                <label class="label">Max Participants</label>
+                <input id="evCapacity" type="number" class="input" placeholder="50" />
+              </div>
+              <div>
+                <label class="label">Selection per Round</label>
+                <input id="evSelectCount" type="number" class="input" placeholder="10" />
+              </div>
+              <div>
+                <label class="label">Randomizer Type</label>
+                <select id="evRandomizer" class="input">
+                  <option value="name">Name Draw</option>
+                  <option value="number">Number Range</option>
+                  <option value="dice">Dice Roll</option>
+                </select>
+              </div>
+            </div>
+            <div class="grid-3">
+              <div class="flex items-center gap-2">
+                <input id="payRequired" type="checkbox" class="h-4 w-4" />
+                <label class="label">Require Payment</label>
+              </div>
+              <div>
+                <label class="label">Price / Slot</label>
+                <input id="payPrice" type="number" class="input" placeholder="25" />
+              </div>
+              <div>
+                <label class="label">Currency</label>
+                <input id="payCurrency" class="input" placeholder="USD" value="USD" />
+              </div>
+            </div>
+
+            <!-- Custom fields -->
+            <div class="card">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h4 class="font-semibold">Signup Form — Custom Fields</h4>
+                  <p class="text-xs text-gray-500">Add extra fields participants must fill.</p>
+                </div>
+                <button id="btnAddCustomField" class="btn">+ Field</button>
+              </div>
+              <div id="customFields" class="mt-2 space-y-2"></div>
+            </div>
+
+            <button id="btnCreateEvent" class="btn btn-primary w-full">Create Event</button>
+          </div>
+        </div>
+
+        <div class="card col-span-2">
+          <div class="flex items-center justify-between">
+            <h3 class="font-semibold">Your Events</h3>
+            <div class="space-x-2">
+              <button id="btnLogout" class="btn">Sign Out</button>
+            </div>
+          </div>
+          <div id="eventsList" class="mt-3 space-y-2"></div>
+        </div>
+      </div>
+<!-- Event Dashboard -->
+      <div id="eventDashboard" class="hidden card mt-4">
+        <div class="flex items-center justify-between flex-wrap gap-2">
+          <div>
+            <h3 id="edTitle" class="font-semibold text-lg">Event</h3>
+            <p id="edSubtitle" class="text-xs text-gray-500"></p>
+          </div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <button id="btnBackToEvents" class="btn">Back to Events</button>
+            <button id="btnCopyJoinLink" class="btn">Copy Join Link</button>
+            <button id="btnDownloadJSON" class="btn">Export Event JSON</button>
+            <button id="btnDeleteEvent" class="btn btn-danger">Delete Event</button>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+          <!-- Left column: QR & Analytics -->
+          <div class="space-y-4">
+            <div class="card">
+              <h4 class="font-semibold mb-2">Participant QR</h4>
+              <div id="eventQR" class="w-full grid place-items-center"></div>
+              <p class="text-xs text-gray-500 mt-2">Scan to join this exact event.</p>
+            </div>
+
+            <div class="card">
+              <h4 class="font-semibold mb-2">Analytics</h4>
+              <div class="grid grid-cols-2 gap-2 text-sm">
+                <div class="p-3 rounded-xl border bg-gray-50">
+                  <div class="text-gray-500">Signups</div>
+                  <div id="statSignups" class="text-2xl font-bold">0</div>
+                </div>
+                <div class="p-3 rounded-xl border bg-gray-50">
+                  <div class="text-gray-500">Paid</div>
+                  <div id="statPaid" class="text-2xl font-bold">0</div>
+                </div>
+                <div class="p-3 rounded-xl border bg-gray-50">
+                  <div class="text-gray-500">Revenue</div>
+                  <div id="statRevenue" class="text-2xl font-bold">$0</div>
+                </div>
+                <div class="p-3 rounded-xl border bg-gray-50">
+                  <div class="text-gray-500">Requests</div>
+                  <div id="statRequests" class="text-2xl font-bold">0</div>
+                </div>
+              </div>
+              <canvas id="miniChart" class="mt-3 w-full h-24"></canvas>
+            </div>
+          </div>
+
+          <!-- Right column: Tabs -->
+          <div class="lg:col-span-3 space-y-4">
+            <div class="flex flex-wrap gap-2">
+              <button data-tab="tab-participants" class="tab tab-active">Participants</button>
+              <button data-tab="tab-randomizer" class="tab">Randomizer</button>
+              <button data-tab="tab-messages" class="tab">Messenger</button>
+              <button data-tab="tab-files" class="tab">Files</button>
+              <button data-tab="tab-setlist" class="tab">Set List</button>
+              <button data-tab="tab-djpool" class="tab">DJ Requests</button>
+              <button data-tab="tab-rewards" class="tab">Rewards</button>
+              <button data-tab="tab-forms" class="tab">Form Generator</button>
+              <button data-tab="tab-vouchers" class="tab">Vouchers</button>
+            </div>
+
+            <!-- Participants Table -->
+            <div id="tab-participants" class="card">
+              <div class="flex items-center justify-between mb-3">
+                <h4 class="font-semibold">Participants</h4>
+                <div class="space-x-2">
+                  <button id="btnDownloadCSV" class="btn">Download CSV</button>
+                  <button id="btnClearNoShow" class="btn">Mark/Filter No-Shows</button>
+                </div>
+              </div>
+              <div class="overflow-x-auto">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>Name</th><th>Stage Name</th><th>Email</th><th>Paid</th><th>Slot</th><th>Files</th><th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="participantsRows"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Randomizer -->
+            <div id="tab-randomizer" class="card hidden">
+              <div class="grid-3">
+                <div>
+                  <label class="label">Mode</label>
+                  <select id="randMode" class="input">
+                    <option value="name">Pick Names</option>
+                    <option value="number">Number Range</option>
+                    <option value="dice">Dice</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="label">Count / Sides / Max</label>
+                  <input id="randParamA" type="number" class="input" value="1" />
+                </div>
+                <div>
+                  <label class="label">Max Picks (unique)</label>
+                  <input id="randParamB" type="number" class="input" value="1" />
+                </div>
+              </div>
+              <div class="flex items-center gap-2 mt-2">
+                <label class="flex items-center gap-2 text-sm"><input id="noRepeat" type="checkbox" />No repeat names</label>
+                <label class="flex items-center gap-2 text-sm"><input id="onlyPaid" type="checkbox" />Only paid participants</label>
+              </div>
+              <div class="mt-3 flex gap-2">
+                <button id="btnRunRandom" class="btn btn-primary">Run</button>
+                <button id="btnClearHistory" class="btn">Clear History</button>
+              </div>
+              <div id="randResults" class="mt-3"></div>
+              <div class="divider"></div>
+              <div>
+                <h5 class="font-semibold mb-1">History</h5>
+                <div id="randHistory" class="text-sm max-h-40 overflow-auto space-y-1"></div>
+              </div>
+            </div>
+
+            <!-- Messenger -->
+            <div id="tab-messages" class="card hidden">
+              <div class="grid-3">
+                <div>
+                  <label class="label">To</label>
+                  <select id="msgTo" class="input"></select>
+                </div>
+                <div class="col-span-2">
+                  <label class="label">Message</label>
+                  <div class="flex gap-2">
+                    <input id="msgText" class="input" placeholder="House rules, stage time, etc." />
+                    <button id="btnSendMsg" class="btn btn-primary">Send</button>
+                  </div>
+                </div>
+              </div>
+              <div id="messagesList" class="mt-3 max-h-72 overflow-auto space-y-2"></div>
+            </div>
+
+            <!-- Files -->
+            <div id="tab-files" class="card hidden">
+              <h4 class="font-semibold mb-2">Files</h4>
+              <div id="filesList" class="grid-3"></div>
+            </div>
+
+            <!-- Set List -->
+            <div id="tab-setlist" class="card hidden">
+              <div class="flex items-center justify-between mb-2">
+                <h4 class="font-semibold">Set List</h4>
+                <div class="space-x-2">
+                  <button id="btnAutoOrder" class="btn">Auto-Order (Random)</button>
+                  <button id="btnClearSetlist" class="btn">Clear</button>
+                </div>
+              </div>
+              <ol id="setlist" class="list-decimal pl-5 space-y-1"></ol>
+            </div>
+
+            <!-- DJ Pool -->
+            <div id="tab-djpool" class="card hidden">
+              <div class="flex items-center justify-between mb-2">
+                <h4 class="font-semibold">DJ Requests Pool</h4>
+                <button id="btnExportDJ" class="btn">Export JSON</button>
+              </div>
+              <div id="djPool" class="space-y-2"></div>
+            </div>
+
+            <!-- Rewards -->
+            <div id="tab-rewards" class="card hidden">
+              <div class="grid-3">
+                <div>
+                  <label class="label">Participant</label>
+                  <select id="rewardUser" class="input"></select>
+                </div>
+                <div>
+                  <label class="label">Title</label>
+                  <input id="rewardTitle" class="input" placeholder="Free drink ticket" />
+                </div>
+                <div>
+                  <label class="label">Points (optional)</label>
+                  <input id="rewardPoints" type="number" class="input" placeholder="0" />
+                </div>
+              </div>
+              <div class="mt-2">
+                <label class="label">Description</label>
+                <textarea id="rewardDesc" class="input" rows="2" placeholder="Congrats for best crowd engagement!"></textarea>
+              </div>
+              <div class="mt-2">
+                <button id="btnGiveReward" class="btn btn-primary">Give Reward</button>
+              </div>
+              <div id="rewardsList" class="mt-3 grid-3"></div>
+            </div>
+
+            <!-- Form Generator -->
+            <div id="tab-forms" class="card hidden">
+              <div class="flex items-center justify-between mb-2">
+                <h4 class="font-semibold">Signup Form — Custom Fields</h4>
+                <button id="btnAddCustomField2" class="btn">+ Field</button>
+              </div>
+              <div id="customFieldsManage" class="space-y-2"></div>
+            </div>
+
+            <!-- Vouchers -->
+            <div id="tab-vouchers" class="card hidden">
+              <div class="grid-3">
+                <div>
+                  <label class="label">Code</label>
+                  <input id="voucherCode" class="input" placeholder="EARLYBIRD" />
+                </div>
+                <div>
+                  <label class="label">Type</label>
+                  <select id="voucherType" class="input">
+                    <option value="percent">Percent</option>
+                    <option value="fixed">Fixed</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="label">Amount</label>
+                  <input id="voucherAmount" type="number" class="input" placeholder="10" />
+                </div>
+              </div>
+              <div class="mt-2">
+                <label class="label">Description</label>
+                <input id="voucherDesc" class="input" placeholder="10% off before 6pm" />
+              </div>
+              <div class="mt-2">
+                <button id="btnAddVoucher" class="btn">Add Voucher</button>
+              </div>
+              <div id="vouchersList" class="mt-3 space-y-2"></div>
+            </div>
+
+          </div>
+        </div>
+      </div> <!-- /eventDashboard -->
+    </section> <!-- /viewAdminApp -->
+<!-- PARTICIPANT VIEW -->
+    <section id="viewParticipant" class="hidden">
+      <div id="joinPane" class="card">
+        <h3 class="font-semibold text-lg">Join Event</h3>
+        <p id="joinEventTitle" class="text-sm text-gray-600">Loading event…</p>
+
+        <div id="signupForm" class="mt-3 space-y-2">
+          <div class="grid-2">
+            <div>
+              <label class="label">Your Name</label>
+              <input id="pName" class="input" placeholder="First & Last" />
+            </div>
+            <div>
+              <label class="label">Stage Name</label>
+              <input id="pStage" class="input" placeholder="Optional" />
+            </div>
+          </div>
+          <div class="grid-2">
+            <div>
+              <label class="label">Email</label>
+              <input id="pEmail" type="email" class="input" placeholder="you@example.com" />
+            </div>
+            <div>
+              <label class="label">Genre / Act</label>
+              <input id="pGenre" class="input" placeholder="Comedy, Rap, Spoken Word…" />
+            </div>
+          </div>
+
+          <div id="signupCustomFields" class="space-y-2"></div>
+
+          <div>
+            <label class="label">Upload Files (mp3, wav, mp4, jpg, png, etc.)</label>
+            <input id="pFiles" type="file" class="input" multiple />
+          </div>
+
+          <div class="grid-2">
+            <div>
+              <label class="label">Voucher Code (optional)</label>
+              <input id="pVoucher" class="input" placeholder="EARLYBIRD" />
+            </div>
+            <div class="flex items-end">
+              <button id="btnApplyVoucher" class="btn w-full">Apply Voucher</button>
+            </div>
+          </div>
+
+          <div id="payPane" class="p-3 rounded-xl border bg-gray-50 hidden">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-sm">Payment Required</div>
+                <div id="slotPrice" class="text-2xl font-bold">$0</div>
+              </div>
+              <button id="btnCheckout" class="btn btn-primary">Checkout</button>
+            </div>
+            <p class="text-xs text-gray-500 mt-1">This is a demo checkout — no real charge. Marked as paid for the host to see.</p>
+          </div>
+
+          <button id="btnJoin" class="btn btn-primary w-full">Join Event</button>
+        </div>
+      </div>
+
+      <div id="participantDash" class="hidden">
+        <div class="card">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 id="pdTitle" class="font-semibold"></h3>
+              <p id="pdSub" class="text-xs text-gray-500"></p>
+            </div>
+            <div class="flex gap-2">
+              <button id="btnViewStagePass" class="btn">Stage Pass</button>
+              <button id="btnLeaveEvent" class="btn btn-danger">Leave Event</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-3 mt-4">
+          <div class="card">
+            <h4 class="font-semibold">Your Status</h4>
+            <div class="mt-2 space-y-1 text-sm">
+              <div>Paid: <span id="pdPaid" class="pill"></span></div>
+              <div>Slot: <span id="pdSlot" class="pill"></span></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h4 class="font-semibold">Message Host / DJ Request</h4>
+            <input id="pdMsg" class="input mt-2" placeholder="Any info for the host…" />
+            <div class="mt-2 flex gap-2">
+              <button id="btnSendHostMsg" class="btn btn-primary">Send Message</button>
+              <button id="btnAddSong" class="btn">Add Song Request</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <h4 class="font-semibold">Your Files</h4>
+            <input id="pdAddFiles" type="file" multiple class="input mt-2" />
+            <div id="pdFiles" class="mt-2 space-y-1 text-sm"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="stagePassPane" class="hidden card mt-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="font-semibold">Stage Pass</h3>
+            <p class="text-xs text-gray-500">Show this QR at the stage door.</p>
+          </div>
+          <button id="btnClosePass" class="btn">Close</button>
+        </div>
+        <div id="passQR" class="mt-3 grid place-items-center"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="max-w-7xl mx-auto px-4 py-8 text-xs text-gray-500">
+    <div>ShowFlow single-file prototype. Data is stored locally in your browser (localStorage). For production, wire to your backend/payments and auth.</div>
+  </footer>
+
+  <!-- QR Code library (CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+
+  <!-- App code -->
+  <script>
+    /****************************
+     * UTILITIES & STORAGE
+     ****************************/
+    const $ = (sel) => document.querySelector(sel);
+    const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+    const byId = (id) => document.getElementById(id);
+    const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2));
+    const fmt = (n, cur='USD') => new Intl.NumberFormat(undefined, { style: 'currency', currency: cur }).format(n || 0);
+
+    const DB = {
+      read(key, def) {
+        try { return JSON.parse(localStorage.getItem(key) || JSON.stringify(def)); } catch { return def; }
+      },
+      write(key, val) {
+        localStorage.setItem(key, JSON.stringify(val));
+      }
+    };
+
+    // Model keys
+    const K = {
+      ADMINS: 'sf_admins',
+      EVENTS: 'sf_events',
+      EVENT: (id) => `sf_event_${id}` // detailed event blob
+    };
+
+    // Initialize demo admin if not present
+    (function bootstrap() {
+      const admins = DB.read(K.ADMINS, []);
+      if (!admins.find(a => a.email === 'admin@demo.app')) {
+        admins.push({ id: uid(), email: 'admin@demo.app', password: 'demo123', createdAt: Date.now() });
+        DB.write(K.ADMINS, admins);
+      }
+    })();
+
+    // Session state (in-memory)
+    const Session = {
+      admin: null,
+      currentEventId: null,
+      participant: null, // {eventId, id, email, name, ...}
+    };
+
+    // Event extended data shape
+    function newEvent(ownerId, data) {
+      return {
+        id: uid(),
+        ownerId,
+        createdAt: Date.now(),
+        ...data,
+        analytics: {
+          signups: [], // timestamps
+          payments: [],
+        },
+        participants: [], // {id,name,stage,email,genre,paid,files:[{name,type,dataUrl,size}], custom: {fieldId: value}, slot:{order,time}, messages:[], joinedAt}
+        messages: [], // {from:'admin'|pid, to:'admin'|pid, text, ts}
+        rewards: [],  // {id, pid, title, desc, points, ts}
+        vouchers: [], // {code,type,amount,desc,active}
+        songPool: [], // {id,pid,title,artist,notes,ts,status:'queued'|'played'}
+        setlist: [],  // [pid]
+        randomHistory: [], // [{mode, params, results, ts}]
+      };
+    }
+
+    function saveEvent(ev) {
+      DB.write(K.EVENT(ev.id), ev);
+      const all = DB.read(K.EVENTS, []);
+      const idx = all.findIndex(e => e.id === ev.id);
+      if (idx >= 0) { all[idx] = { id: ev.id, ownerId: ev.ownerId, name: ev.name, date: ev.date, venue: ev.venue }; }
+      else { all.unshift({ id: ev.id, ownerId: ev.ownerId, name: ev.name, date: ev.date, venue: ev.venue }); }
+      DB.write(K.EVENTS, all);
+    }
+    function loadEvent(id) {
+      return DB.read(K.EVENT(id), null);
+    }
+
+    function toast(msg, type='info') {
+      const banner = byId('banner');
+      banner.textContent = msg;
+      banner.classList.remove('hidden');
+      banner.className = '';
+      banner.classList.add('p-3','rounded-xl','border','mt-2');
+      if (type==='error') banner.classList.add('bg-red-50','text-red-800','border-red-200');
+      else if (type==='success') banner.classList.add('bg-emerald-50','text-emerald-800','border-emerald-200');
+      else banner.classList.add('bg-amber-50','text-amber-800','border-amber-200');
+      setTimeout(() => banner.classList.add('hidden'), 3000);
+    }
+
+    function download(filename, text) {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([text], {type: 'application/json'}));
+      a.download = filename;
+      a.click();
+    }
+
+    function dataURLFromFile(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    /****************************
+     * NAVIGATION
+     ****************************/
+    const navAdmin = byId('navAdmin');
+    const navParticipant = byId('navParticipant');
+    const viewAdminAuth = byId('viewAdminAuth');
+    const viewAdminApp  = byId('viewAdminApp');
+    const viewParticipant = byId('viewParticipant');
+
+    function showAdminAuth() {
+      viewAdminAuth.classList.remove('hidden');
+      viewAdminApp.classList.add('hidden');
+      viewParticipant.classList.add('hidden');
+      navAdmin.classList.add('tab-active');
+      navParticipant.classList.remove('tab-active');
+    }
+    function showAdminApp() {
+      viewAdminAuth.classList.add('hidden');
+      viewAdminApp.classList.remove('hidden');
+      viewParticipant.classList.add('hidden');
+      navAdmin.classList.add('tab-active');
+      navParticipant.classList.remove('tab-active');
+    }
+    function showParticipant() {
+      viewAdminAuth.classList.add('hidden');
+      viewAdminApp.classList.add('hidden');
+      viewParticipant.classList.remove('hidden');
+      navAdmin.classList.remove('tab-active');
+      navParticipant.classList.add('tab-active');
+    }
+
+    navAdmin.onclick = () => {
+      if (Session.admin) showAdminApp(); else showAdminAuth();
+    };
+    navParticipant.onclick = () => {
+      showParticipant();
+      routeParticipantFromHash();
+    };
+
+    /****************************
+     * AUTH — Admin
+     ****************************/
+    byId('btnLogin').onclick = () => {
+      const email = byId('loginEmail').value.trim().toLowerCase();
+      const pass = byId('loginPassword').value;
+      const admins = DB.read(K.ADMINS, []);
+      const found = admins.find(a => a.email === email && a.password === pass);
+      if (!found) return toast('Invalid credentials', 'error');
+      Session.admin = found;
+      renderAdminApp();
+      showAdminApp();
+      toast('Signed in.', 'success');
+    };
+
+    byId('btnSignup').onclick = () => {
+      const email = byId('signupEmail').value.trim().toLowerCase();
+      const pass = byId('signupPassword').value;
+      if (!email || !pass) return toast('Please provide email and password.', 'error');
+      const admins = DB.read(K.ADMINS, []);
+      if (admins.find(a => a.email === email)) return toast('Email already exists.', 'error');
+      const admin = { id: uid(), email, password: pass, createdAt: Date.now() };
+      admins.push(admin);
+      DB.write(K.ADMINS, admins);
+      Session.admin = admin;
+      renderAdminApp();
+      showAdminApp();
+      toast('Account created.', 'success');
+    };
+
+    byId('btnLogout').onclick = () => {
+      Session.admin = null;
+      Session.currentEventId = null;
+      showAdminAuth();
+      toast('Signed out.');
+    };
+
+    /****************************
+     * ADMIN — Event Wizard & List
+     ****************************/
+    const activeAdminEmail = byId('activeAdminEmail');
+    const eventsList = byId('eventsList');
+
+    function renderAdminApp() {
+      activeAdminEmail.textContent = Session.admin?.email || '';
+      // List events for this admin
+      const all = DB.read(K.EVENTS, []);
+      const mine = all.filter(e => e.ownerId === Session.admin.id);
+      eventsList.innerHTML = '';
+      if (mine.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'text-sm text-gray-500';
+        empty.textContent = 'No events yet. Use the form at left to create one.';
+        eventsList.appendChild(empty);
+      } else {
+        mine.forEach(e => {
+          const row = document.createElement('div');
+          row.className = 'border rounded-xl p-3 flex items-center justify-between';
+          row.innerHTML = `
+            <div>
+              <div class="font-medium">${e.name}</div>
+              <div class="text-xs text-gray-500">${new Date(e.date || Date.now()).toLocaleString()} • ${e.venue || '—'}</div>
+            </div>
+            <div class="space-x-2">
+              <button class="btn" data-open="${e.id}">Open</button>
+            </div>
+          `;
+          eventsList.appendChild(row);
+        });
+        eventsList.querySelectorAll('[data-open]').forEach(btn => btn.onclick = () => openEvent(btn.dataset.open));
+      }
+    }
+
+    // Custom field builders
+    function addCustomFieldChip(container, field) {
+      const row = document.createElement('div');
+      row.className = 'border rounded-xl p-2 flex items-center justify-between';
+      row.innerHTML = `
+        <div class="text-sm"><span class="pill mr-2">${field.type}</span>${field.label}${field.required ? ' <span class="text-red-600">*</span>' : ''}</div>
+        <button class="btn" data-remove="${field.id}">Remove</button>
+      `;
+      container.appendChild(row);
+      row.querySelector('[data-remove]').onclick = () => {
+        row.remove();
+      };
+    }
+
+    byId('btnAddCustomField').onclick = () => {
+      const id = uid();
+      const container = byId('customFields');
+      const field = { id, type: 'text', label: 'Custom field', required: false };
+      const row = document.createElement('div');
+      row.className = 'grid-3 gap-2 border rounded-xl p-2';
+      row.innerHTML = `
+        <input class="input" placeholder="Field label" value="${field.label}" />
+        <select class="input">
+          <option value="text">Text</option>
+          <option value="number">Number</option>
+          <option value="select">Select (comma options)</option>
+        </select>
+        <label class="flex items-center gap-2 text-sm"><input type="checkbox" />Required</label>
+      `;
+      container.appendChild(row);
+    };
+
+    byId('btnCreateEvent').onclick = () => {
+      const name = byId('evName').value.trim() || 'Untitled Event';
+      const date = byId('evDate').value || new Date().toISOString();
+      const venue = byId('evVenue').value.trim();
+      const rules = byId('evRules').value.trim();
+      const capacity = parseInt(byId('evCapacity').value || '0', 10);
+      const selectCount = parseInt(byId('evSelectCount').value || '1', 10);
+      const randomizer = byId('evRandomizer').value;
+      const payRequired = byId('payRequired').checked;
+      const payPrice = parseFloat(byId('payPrice').value || '0');
+      const payCurrency = byId('payCurrency').value || 'USD';
+
+      // collect custom fields
+      const cfRows = Array.from(byId('customFields').children);
+      const customFields = cfRows.map(r => {
+        const inputs = r.querySelectorAll('input,select');
+        const labelEl = inputs[0];
+        const typeEl  = inputs[1];
+        const reqEl   = inputs[2];
+        return {
+          id: uid(),
+          label: (labelEl?.value || 'Custom field').trim(),
+          type: typeEl?.value || 'text',
+          required: !!reqEl?.checked
+        };
+      });
+
+      const ev = newEvent(Session.admin.id, {
+        name, date, venue, rules, capacity, selectCount,
+        randomizer,
+        payments: { required: payRequired, price: payPrice, currency: payCurrency },
+        customFields
+      });
+      saveEvent(ev);
+      renderAdminApp();
+      openEvent(ev.id);
+      toast('Event created.', 'success');
+    };
+// Open event
+    const eventDashboard = byId('eventDashboard');
+    const edTitle = byId('edTitle');
+    const edSubtitle = byId('edSubtitle');
+    const eventQR = byId('eventQR');
+    const statSignups = byId('statSignups');
+    const statPaid = byId('statPaid');
+    const statRevenue = byId('statRevenue');
+    const statRequests = byId('statRequests');
+    const miniChart = byId('miniChart').getContext('2d');
+
+    function openEvent(id) {
+      const ev = loadEvent(id);
+      if (!ev) return toast('Event not found', 'error');
+      Session.currentEventId = id;
+      eventDashboard.classList.remove('hidden');
+      // Title
+      edTitle.textContent = ev.name;
+      edSubtitle.textContent = `${new Date(ev.date).toLocaleString()} • ${ev.venue || '—'} • ${ev.rules || ''}`;
+      // QR
+      eventQR.innerHTML = '';
+      const joinUrl = buildJoinURL(id);
+      new QRCode(eventQR, { width: 192, height: 192, text: joinUrl });
+      // Stats
+      refreshStats(ev);
+      // Participants table
+      renderParticipants(ev);
+      // Tabs
+      initTabs();
+      // Fill selects
+      refreshSelects(ev);
+      // Files grid
+      renderFiles(ev);
+      // Setlist
+      renderSetlist(ev);
+      // DJ pool
+      renderDJ(ev);
+      // Rewards
+      renderRewards(ev);
+      // Custom fields manage
+      renderCustomFieldsManage(ev);
+      // History
+      renderHistory(ev);
+    }
+
+    function buildJoinURL(eventId) {
+      const base = location.href.split('#')[0];
+      return `${base}#join=${eventId}`;
+    }
+
+    function refreshStats(ev) {
+      statSignups.textContent = ev.participants.length;
+      const paidCount = ev.participants.filter(p => p.paid).length;
+      statPaid.textContent = paidCount;
+      const rev = (ev.payments?.required ? paidCount * (ev.payments.price || 0) : 0);
+      statRevenue.textContent = fmt(rev, ev.payments?.currency || 'USD');
+      statRequests.textContent = ev.songPool.length;
+
+      // Tiny bar chart
+      const w = miniChart.canvas.width, h = miniChart.canvas.height;
+      miniChart.clearRect(0,0,w,h);
+      const max = Math.max(ev.participants.length, paidCount, 1);
+      const barW = w/4;
+      const sH = (ev.participants.length / max) * (h - 10);
+      miniChart.fillStyle = '#111827';
+      miniChart.fillRect(w*0.2 - barW/2, h - sH, barW, sH);
+      const pH = (paidCount / max) * (h - 10);
+      miniChart.fillStyle = '#6b7280';
+      miniChart.fillRect(w*0.8 - barW/2, h - pH, barW, pH);
+    }
+
+    byId('btnBackToEvents').onclick = () => {
+      eventDashboard.classList.add('hidden');
+      renderAdminApp();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    byId('btnCopyJoinLink').onclick = async () => {
+      const url = buildJoinURL(Session.currentEventId);
+      await navigator.clipboard.writeText(url);
+      toast('Join link copied to clipboard.', 'success');
+    };
+
+    byId('btnDownloadJSON').onclick = () => {
+      const ev = loadEvent(Session.currentEventId);
+      if (!ev) return;
+      download(`${ev.name.replace(/\W+/g,'_')}.json`, JSON.stringify(ev, null, 2));
+    };
+
+    byId('btnDeleteEvent').onclick = () => {
+      const id = Session.currentEventId;
+      if (!id) return;
+      if (!confirm('Delete this event? This action cannot be undone.')) return;
+      localStorage.removeItem(K.EVENT(id));
+      const all = DB.read(K.EVENTS, []).filter(e => e.id !== id);
+      DB.write(K.EVENTS, all);
+      Session.currentEventId = null;
+      eventDashboard.classList.add('hidden');
+      renderAdminApp();
+      toast('Event deleted.', 'success');
+    };
+
+    /****************************
+     * TABS in Event Dashboard
+     ****************************/
+    function initTabs() {
+      const tabs = $$('[data-tab]');
+      tabs.forEach(btn => btn.onclick = () => {
+        const id = btn.dataset.tab;
+        tabs.forEach(b => b.classList.remove('tab-active'));
+        btn.classList.add('tab-active');
+        ['tab-participants','tab-randomizer','tab-messages','tab-files','tab-setlist','tab-djpool','tab-rewards','tab-forms','tab-vouchers']
+          .forEach(tid => byId(tid).classList.toggle('hidden', tid !== id));
+      });
+    }
+
+    /****************************
+     * PARTICIPANTS TABLE
+     ****************************/
+    const participantsRows = byId('participantsRows');
+    function renderParticipants(ev) {
+      participantsRows.innerHTML = '';
+      ev.participants.forEach(p => {
+        const tr = document.createElement('tr');
+        const filesCount = p.files?.length || 0;
+        tr.innerHTML = `
+          <td>${p.name || '—'}</td>
+          <td>${p.stage || '—'}</td>
+          <td>${p.email || '—'}</td>
+          <td>
+            <button class="btn ${p.paid ? 'btn-primary' : ''}" data-toggle-paid="${p.id}">${p.paid ? 'Paid' : 'Mark Paid'}</button>
+          </td>
+          <td>${p.slot?.order != null ? ('#' + (p.slot.order+1)) : '—'}</td>
+          <td>${filesCount} file(s)</td>
+          <td class="space-x-1">
+            <button class="btn" data-msg="${p.id}">Msg</button>
+            <button class="btn" data-stagepass="${p.id}">Pass</button>
+            <button class="btn" data-download="${p.id}">Files</button>
+            <button class="btn btn-danger" data-remove="${p.id}">Remove</button>
+          </td>
+        `;
+        participantsRows.appendChild(tr);
+      });
+
+      // Wire actions
+      participantsRows.querySelectorAll('[data-toggle-paid]').forEach(btn => btn.onclick = () => {
+        const pid = btn.dataset.togglePaid;
+        const ev = loadEvent(Session.currentEventId);
+        const p = ev.participants.find(x => x.id === pid);
+        if (!p) return;
+        p.paid = !p.paid;
+        if (p.paid) ev.analytics.payments.push(Date.now());
+        saveEvent(ev);
+        openEvent(ev.id);
+      });
+      participantsRows.querySelectorAll('[data-remove]').forEach(btn => btn.onclick = () => {
+        const pid = btn.dataset.remove;
+        const ev = loadEvent(Session.currentEventId);
+        ev.participants = ev.participants.filter(x => x.id !== pid);
+        ev.setlist = ev.setlist.filter(x => x !== pid);
+        saveEvent(ev);
+        openEvent(ev.id);
+      });
+      participantsRows.querySelectorAll('[data-download]').forEach(btn => btn.onclick = () => {
+        const pid = btn.dataset.download;
+        const ev = loadEvent(Session.currentEventId);
+        const p = ev.participants.find(x => x.id === pid);
+        if (!p || !p.files?.length) return toast('No files.', 'error');
+        p.files.forEach(f => {
+          const a = document.createElement('a');
+          a.href = f.dataUrl;
+          a.download = f.name;
+          a.click();
+        });
+      });
+      participantsRows.querySelectorAll('[data-stagepass]').forEach(btn => btn.onclick = () => {
+        const pid = btn.dataset.stagepass;
+        const url = `${location.href.split('#')[0]}#pass=${Session.currentEventId}:${pid}`;
+        prompt('Stage pass link (copy to open/scan):', url);
+      });
+      participantsRows.querySelectorAll('[data-msg]').forEach(btn => btn.onclick = () => {
+        byId('msgTo').value = btn.dataset.msg;
+        document.querySelector('[data-tab="tab-messages"]').click();
+        byId('msgText').focus();
+      });
+    }
+
+    byId('btnDownloadCSV').onclick = () => {
+      const ev = loadEvent(Session.currentEventId);
+      if (!ev) return;
+      const headers = ['Name','Stage Name','Email','Genre','Paid','Slot','JoinedAt'];
+      const rows = ev.participants.map(p => [
+        p.name, p.stage||'', p.email||'', p.genre||'',
+        p.paid ? 'Yes':'No',
+        (p.slot?.order != null ? (p.slot.order+1) : ''),
+        new Date(p.joinedAt||Date.now()).toLocaleString()
+      ]);
+      const csv = [headers.join(','), ...rows.map(r => r.map(x => `"${String(x||'').replace(/"/g,'""')}"`).join(','))].join('\n');
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+      a.download = `${ev.name.replace(/\W+/g,'_')}_participants.csv`;
+      a.click();
+    };
+
+    byId('btnClearNoShow').onclick = () => {
+      const ev = loadEvent(Session.currentEventId);
+      if (!ev) return;
+      if (!confirm('Filter out participants with no files and not paid?')) return;
+      ev.participants = ev.participants.filter(p => (p.files?.length||0)>0 || p.paid);
+      saveEvent(ev);
+      openEvent(ev.id);
+    };
+
+    /****************************
+     * RANDOMIZER
+     ****************************/
+    byId('btnRunRandom').onclick = () => {
+      const ev = loadEvent(Session.currentEventId);
+      if (!ev) return;
+      const mode = byId('randMode').value;
+      const A = parseInt(byId('randParamA').value || '1', 10);
+      const B = parseInt(byId('randParamB').value || '1', 10);
+      const onlyPaid = byId('onlyPaid').checked;
+      const noRepeat = byId('noRepeat').checked;
+
+      let results = [];
+      if (mode === 'dice') {
+        for (let i=0;i<A;i++) results.push(1 + Math.floor(Math.random()* (B||6)));
+      } else if (mode === 'number') {
+        for (let i=0;i<A;i++) results.push(1 + Math.floor(Math.random()* (B||100)));
+      } else { // name
+        const pool = ev.participants.filter(p => (!onlyPaid || p.paid));
+        let picks = Math.min(A, pool.length);
+        const chosen = [];
+        const used = new Set(noRepeat ? (ev.randomHistory.flatMap(h => h.results||[]).filter(x => typeof x==='string')) : []);
+        const candidates = pool.filter(p => !used.has(p.id));
+        for (let i=0;i<picks;i++) {
+          if (candidates.length===0) break;
+          const idx = Math.floor(Math.random()*candidates.length);
+          const p = candidates.splice(idx,1)[0];
+          chosen.push(p);
+        }
+        results = chosen.map(p => p.id);
+      }
+
+      // Show results
+      const out = byId('randResults');
+      out.innerHTML = '';
+      if (mode==='name') {
+        results.forEach(id => {
+          const p = ev.participants.find(x => x.id===id);
+          const div = document.createElement('div');
+          div.className = 'p-2 rounded-xl border bg-gray-50 flex items-center justify-between';
+          div.innerHTML = `<div><span class="pill mr-2">WIN</span>${p?.name || id}</div>
+            <div class="space-x-1">
+              <button class="btn" data-add-set="${id}">Add to Set</button>
+              <button class="btn" data-msg="${id}">Message</button>
+            </div>`;
+          out.appendChild(div);
+        });
+        out.querySelectorAll('[data-add-set]').forEach(b => b.onclick = () => {
+          const pid = b.dataset.addSet;
+          if (!ev.setlist.includes(pid)) ev.setlist.push(pid);
+          saveEvent(ev);
+          renderSetlist(ev);
+          toast('Added to setlist.','success');
+        });
+        out.querySelectorAll('[data-msg]').forEach(b => b.onclick = () => {
+          byId('msgTo').value = b.dataset.msg;
+          document.querySelector('[data-tab="tab-messages"]').click();
+          byId('msgText').focus();
+        });
+      } else {
+        const div = document.createElement('div');
+        div.className = 'p-2 rounded-xl border bg-gray-50';
+        div.textContent = results.join(', ');
+        out.appendChild(div);
+      }
+
+      ev.randomHistory.unshift({ mode, params:{A,B,onlyPaid,noRepeat}, results, ts: Date.now() });
+      saveEvent(ev);
+      renderHistory(ev);
+    };
+
+    byId('btnClearHistory').onclick = () => {
+      const ev = loadEvent(Session.currentEventId);
+      if (!ev) return;
+      ev.randomHistory = [];
+      saveEvent(ev);
+      renderHistory(ev);
+    };
+
+    function renderHistory(ev) {
+      const box = byId('randHistory');
+      box.innerHTML = '';
+      ev.randomHistory.slice(0,50).forEach(h => {
+        const res = (h.mode==='name') ? (h.results.map(id => ev.participants.find(p=>p.id===id)?.name||id).join(', ')) : h.results.join(', ');
+        const line = document.createElement('div');
+        line.textContent = `[${new Date(h.ts).toLocaleTimeString()}] ${h.mode} → ${res}`;
+        box.appendChild(line);
+      });
+    }
+
+    /****************************
+     * MESSENGER
+     ****************************/
+    const msgTo = byId('msgTo');
+    const msgText = byId('msgText');
+    const messagesList = byId('messagesList');
+
+    function refreshSelects(ev) {
+      [msgTo, byId('rewardUser')].forEach(sel => {
+        sel.innerHTML = '<option value="all">All Participants</option>';
+        ev.participants.forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p.id;
+          opt.textContent = p.name || p.email;
+          sel.appendChild(opt);
+        });
+      });
+    }
+
+    byId('btnSendMsg').onclick = () => {
+      const ev = loadEvent(Session.currentEventId);
+      if (!ev) return;
+      const to = msgTo.value;
+      const text = msgText.value.trim();
+      if (!text) return;
+      const msg = { from:'admin', to, text, ts: Date.now() };
+      ev.messages.push(msg);
+      saveEvent(ev);
+      msgText.value='';
+      renderMessages(ev);
+    };
+
+    function renderMessages(ev) {
+      messagesList.innerHTML='';
+      ev.messages.slice(-200).forEach(m => {
+        const div = document.createElement('div');
+        div.className = 'p-2 rounded-xl border bg-gray-50';
+        const toHuman = m.to==='all' ? 'All' : (ev.participants.find(p=>p.id===m.to)?.name || m.to);
+        const fromHuman = m.from==='admin' ? 'Host' : (ev.participants.find(p=>p.id===m.from)?.name || m.from);
+        div.innerHTML = `<div class="text-xs text-gray-500">${fromHuman} → ${toHuman} • ${new Date(m.ts).toLocaleString()}</div><div>${m.text}</div>`;
+        messagesList.appendChild(div);
+      });
+    }
+
+    /****************************
+     * FILES GRID
+     ****************************/
+    const filesList = byId('filesList');
+    function renderFiles(ev) {
+      filesList.innerHTML='';
+      ev.participants.forEach(p => {
+        (p.files||[]).forEach(f => {
+          const card = document.createElement('div');
+          card.className = 'border rounded-xl p-2';
+          const isImage = /^image\//.test(f.type);
+          card.innerHTML = `
+            <div class="text-xs text-gray-500">${p.name} • ${f.name} • ${(f.size||0)} bytes</div>
+            <div class="mt-1">${isImage ? `<img src="${f.dataUrl}" alt="" class="rounded-lg max-h-32">` : `<div class="text-xs">(${f.type})</div>`}</div>
+            <div class="mt-2"><a class="btn" download="${f.name}" href="${f.dataUrl}">Download</a></div>
+          `;
+          filesList.appendChild(card);
+        });
+      });
+    }
+
+    /****************************
+     * SETLIST
+     ****************************/
+    const setlist = byId('setlist');
+    function renderSetlist(ev) {
+      setlist.innerHTML = '';
+      ev.setlist.forEach((pid, idx) => {
+        const p = ev.participants.find(x=>x.id===pid);
+        const li = document.createElement('li');
+        li.innerHTML = `<div class="flex items-center justify-between">
+          <div>${p?.name || pid}</div>
+          <div class="space-x-1">
+            <button class="btn" data-up="${idx}">Up</button>
+            <button class="btn" data-down="${idx}">Down</button>
+            <button class="btn btn-danger" data-rem="${idx}">Remove</button>
+          </div>
+        </div>`;
+        setlist.appendChild(li);
+      });
+      setlist.querySelectorAll('[data-up]').forEach(b => b.onclick = () => {
+        const i = +b.dataset.up, ev = loadEvent(Session.currentEventId);
+        if (i>0) [ev.setlist[i-1],ev.setlist[i]] = [ev.setlist[i],ev.setlist[i-1]];
+        saveEvent(ev); renderSetlist(ev);
+      });
+      setlist.querySelectorAll('[data-down]').forEach(b => b.onclick = () => {
+        const i = +b.dataset.down, ev = loadEvent(Session.currentEventId);
+        if (i<ev.setlist.length-1) [ev.setlist[i+1],ev.setlist[i]] = [ev.setlist[i],ev.setlist[i+1]];
+        saveEvent(ev); renderSetlist(ev);
+      });
+      setlist.querySelectorAll('[data-rem]').forEach(b => b.onclick = () => {
+        const i = +b.dataset.rem, ev = loadEvent(Session.currentEventId);
+        ev.setlist.splice(i,1); saveEvent(ev); renderSetlist(ev);
+      });
+    }
+    byId('btnAutoOrder').onclick = () => {
+      const ev = loadEvent(Session.currentEventId);
+      if (!ev) return;
+      ev.setlist = ev.participants.map(p=>p.id).sort(()=>Math.random()-0.5);
+      saveEvent(ev);
+      renderSetlist(ev);
+    };
+    byId('btnClearSetlist').onclick = () => {
+      const ev = loadEvent(Session.currentEventId);
+      if (!ev) return;
+      ev.setlist = [];
+      saveEvent(ev);
+      renderSetlist(ev);
+    };
+
+    /****************************
+     * DJ POOL
+     ****************************/
+    const djPool = byId('djPool');
+    function renderDJ(ev) {
+      djPool.innerHTML='';
+      ev.songPool.forEach(req => {
+        const card = document.createElement('div');
+        const p = ev.participants.find(x=>x.id===req.pid);
+        card.className = 'border rounded-xl p-2 flex items-center justify-between';
+        card.innerHTML = `<div>
+          <div class="font-medium">${req.title} — ${req.artist || 'Unknown'}</div>
+          <div class="text-xs text-gray-500">By ${p?.name || req.pid} • ${new Date(req.ts).toLocaleString()}</div>
+        </div>
+        <div class="space-x-1">
+          <span class="pill">${req.status||'queued'}</span>
+          <button class="btn" data-mark-played="${req.id}">Played</button>
+          <button class="btn btn-danger" data-remove-req="${req.id}">Remove</button>
+        </div>`;
+        djPool.appendChild(card);
+      });
+      djPool.querySelectorAll('[data-mark-played]').forEach(b => b.onclick = () => {
+        const ev = loadEvent(Session.currentEventId);
+        const r = ev.songPool.find(x=>x.id===b.dataset.markPlayed);
+        if (r) r.status='played';
+        saveEvent(ev); renderDJ(ev);
+      });
+      djPool.querySelectorAll('[data-remove-req]').forEach(b => b.onclick = () => {
+        const ev = loadEvent(Session.currentEventId);
+        ev.songPool = ev.songPool.filter(x=>x.id!==b.dataset.removeReq);
+        saveEvent(ev); renderDJ(ev);
+      });
+    }
+    byId('btnExportDJ').onclick = () => {
+      const ev = loadEvent(Session.currentEventId);
+      if (!ev) return;
+      download(`${ev.name.replace(/\W+/g,'_')}_dj_pool.json`, JSON.stringify(ev.songPool, null, 2));
+    };
+
+    /****************************
+     * REWARDS
+     ****************************/
+    const rewardsList = byId('rewardsList');
+    byId('btnGiveReward').onclick = () => {
+      const ev = loadEvent(Session.currentEventId);
+      const pid = byId('rewardUser').value;
+      const title = byId('rewardTitle').value.trim() || 'Reward';
+      const desc = byId('rewardDesc').value.trim() || '';
+      const points = parseInt(byId('rewardPoints').value || '0', 10);
+      if (!ev) return;
+      if (pid==='all') return toast('Choose a participant to reward.', 'error');
+      ev.rewards.unshift({ id: uid(), pid, title, desc, points, ts: Date.now() });
+      saveEvent(ev);
+      renderRewards(ev);
+      toast('Reward issued.', 'success');
+    };
+    function renderRewards(ev) {
+      rewardsList.innerHTML='';
+      ev.rewards.forEach(r => {
+        const p = ev.participants.find(x=>x.id===r.pid);
+        const card = document.createElement('div');
+        card.className = 'border rounded-xl p-3';
+        card.innerHTML = `<div class="text-xs text-gray-500">${new Date(r.ts).toLocaleString()}</div>
+          <div class="font-medium">${r.title} ${r.points?`• ${r.points} pts`:''}</div>
+          <div class="text-sm">${r.desc||''}</div>
+          <div class="text-xs text-gray-500 mt-1">For: ${p?.name || r.pid}</div>`;
+        rewardsList.appendChild(card);
+      });
+    }
+/****************************
+     * FORM GENERATOR (MANAGE)
+     ****************************/
+    const customFieldsManage = byId('customFieldsManage');
+    byId('btnAddCustomField2').onclick = () => {
+      const ev = loadEvent(Session.currentEventId);
+      if (!ev) return;
+      ev.customFields = ev.customFields || [];
+      ev.customFields.push({ id: uid(), label:'New Field', type:'text', required:false });
+      saveEvent(ev);
+      renderCustomFieldsManage(ev);
+      toast('Field added.','success');
+    };
+    function renderCustomFieldsManage(ev) {
+      customFieldsManage.innerHTML='';
+      (ev.customFields||[]).forEach(f => {
+        const row = document.createElement('div');
+        row.className = 'grid-3 gap-2 border rounded-xl p-2';
+        row.innerHTML = `
+          <input class="input" value="${f.label}" />
+          <select class="input">
+            <option value="text" ${f.type==='text'?'selected':''}>Text</option>
+            <option value="number" ${f.type==='number'?'selected':''}>Number</option>
+            <option value="select" ${f.type==='select'?'selected':''}>Select</option>
+          </select>
+          <div class="flex items-center gap-2"><input type="checkbox" ${f.required?'checked':''}/> <span class="text-sm">Required</span></div>
+          <div class="col-span-3">
+            <button class="btn" data-save="${f.id}">Save</button>
+            <button class="btn btn-danger" data-del="${f.id}">Delete</button>
+          </div>
+        `;
+        customFieldsManage.appendChild(row);
+        const inputs = row.querySelectorAll('input,select');
+        const labelEl = inputs[0];
+        const typeEl  = inputs[1];
+        const reqEl   = inputs[2];
+        row.querySelector('[data-save]').onclick = () => {
+          f.label = (labelEl.value || 'Field').trim();
+          f.type = typeEl.value;
+          f.required = !!reqEl.checked;
+          saveEvent(ev);
+          toast('Saved.','success');
+        };
+        row.querySelector('[data-del]').onclick = () => {
+          ev.customFields = ev.customFields.filter(x=>x.id!==f.id);
+          saveEvent(ev);
+          renderCustomFieldsManage(ev);
+        };
+      });
+    }
+
+    /****************************
+     * VOUCHERS
+     ****************************/
+    const vouchersList = byId('vouchersList');
+    byId('btnAddVoucher').onclick = () => {
+      const ev = loadEvent(Session.currentEventId);
+      const code = byId('voucherCode').value.trim().toUpperCase();
+      const type = byId('voucherType').value;
+      const amount = parseFloat(byId('voucherAmount').value || '0');
+      const desc = byId('voucherDesc').value.trim();
+      if (!code) return toast('Enter code.', 'error');
+      ev.vouchers = ev.vouchers || [];
+      if (ev.vouchers.find(v => v.code === code)) return toast('Code exists.', 'error');
+      ev.vouchers.unshift({ code, type, amount, desc, active: true });
+      saveEvent(ev);
+      renderVouchers(ev);
+      toast('Voucher added.','success');
+    };
+    function renderVouchers(ev) {
+      vouchersList.innerHTML='';
+      (ev.vouchers||[]).forEach(v => {
+        const row = document.createElement('div');
+        row.className = 'border rounded-xl p-2 flex items-center justify-between';
+        row.innerHTML = `<div>
+          <div class="font-medium">${v.code} <span class="pill">${v.type} ${v.amount}</span></div>
+          <div class="text-xs text-gray-500">${v.desc||''}</div>
+        </div>
+        <div class="space-x-1">
+          <button class="btn" data-toggle="${v.code}">${v.active?'Deactivate':'Activate'}</button>
+          <button class="btn btn-danger" data-del="${v.code}">Delete</button>
+        </div>`;
+        vouchersList.appendChild(row);
+      });
+      vouchersList.querySelectorAll('[data-toggle]').forEach(b => b.onclick = () => {
+        const ev = loadEvent(Session.currentEventId);
+        const v = ev.vouchers.find(x=>x.code===b.dataset.toggle);
+        if (v) v.active = !v.active;
+        saveEvent(ev); renderVouchers(ev);
+      });
+      vouchersList.querySelectorAll('[data-del]').forEach(b => b.onclick = () => {
+        const ev = loadEvent(Session.currentEventId);
+        ev.vouchers = ev.vouchers.filter(x=>x.code!==b.dataset.del);
+        saveEvent(ev); renderVouchers(ev);
+      });
+    }
+
+    /****************************
+     * PARTICIPANT FLOW
+     ****************************/
+    const joinPane = byId('joinPane');
+    const joinEventTitle = byId('joinEventTitle');
+    const signupCustomFields = byId('signupCustomFields');
+    const payPane = byId('payPane');
+    const slotPrice = byId('slotPrice');
+
+    function routeParticipantFromHash() {
+      const h = location.hash.slice(1);
+      if (h.startsWith('join=')) {
+        const eventId = h.split('=')[1];
+        loadJoinEvent(eventId);
+      } else if (h.startsWith('pass=')) {
+        const [eventId, pid] = h.split('=')[1].split(':');
+        openStagePass(eventId, pid);
+      } else {
+        joinEventTitle.textContent = 'Provide a join link from the host.';
+        joinPane.classList.remove('hidden');
+        byId('participantDash').classList.add('hidden');
+      }
+    }
+
+    function loadJoinEvent(eventId) {
+      const ev = loadEvent(eventId);
+      if (!ev) { joinEventTitle.textContent='Event not found.'; return; }
+      Session.participant = { eventId };
+      joinEventTitle.innerHTML = `<span class="font-medium">${ev.name}</span> — ${new Date(ev.date).toLocaleString()} • ${ev.venue || '—'}<br><span class="text-xs text-gray-500">${ev.rules||''}</span>`;
+      payPane.classList.toggle('hidden', !ev.payments?.required);
+      slotPrice.textContent = fmt(ev.payments?.price || 0, ev.payments?.currency || 'USD');
+      // Custom fields
+      signupCustomFields.innerHTML='';
+      (ev.customFields||[]).forEach(f => {
+        const row = document.createElement('div');
+        row.innerHTML = `<label class="label">${f.label} ${f.required?'<span class="text-red-600">*</span>':''}</label>`;
+        let input;
+        if (f.type==='select') {
+          input = document.createElement('select');
+          input.className = 'input';
+          input.innerHTML = '<option>Option 1</option><option>Option 2</option>';
+        } else {
+          input = document.createElement('input');
+          input.type = f.type==='number' ? 'number' : 'text';
+          input.className = 'input';
+        }
+        input.dataset.fieldId = f.id;
+        row.appendChild(input);
+        signupCustomFields.appendChild(row);
+      });
+    }
+
+    byId('btnApplyVoucher').onclick = () => {
+      const ev = loadEvent(Session.participant?.eventId);
+      if (!ev) return;
+      const code = byId('pVoucher').value.trim().toUpperCase();
+      const v = (ev.vouchers||[]).find(x=>x.code===code && x.active);
+      if (!v) return toast('Invalid or inactive code.', 'error');
+      let price = ev.payments?.price || 0;
+      if (v.type==='percent') price = Math.max(0, price * (1 - v.amount/100));
+      else price = Math.max(0, price - v.amount);
+      slotPrice.textContent = fmt(price, ev.payments?.currency || 'USD');
+      toast('Voucher applied.','success');
+    };
+
+    byId('btnCheckout').onclick = () => {
+      toast('Checkout successful (demo).','success');
+      byId('btnCheckout').disabled = true;
+    };
+
+    byId('btnJoin').onclick = async () => {
+      const ev = loadEvent(Session.participant?.eventId);
+      if (!ev) return;
+      if (ev.capacity && ev.participants.length >= ev.capacity) return toast('Event is at capacity.', 'error');
+
+      const p = {
+        id: uid(),
+        name: byId('pName').value.trim(),
+        stage: byId('pStage').value.trim(),
+        email: byId('pEmail').value.trim(),
+        genre: byId('pGenre').value.trim(),
+        paid: ev.payments?.required ? byId('btnCheckout').disabled : false,
+        files: [],
+        custom: {},
+        messages: [],
+        joinedAt: Date.now()
+      };
+
+      // custom field values
+      signupCustomFields.querySelectorAll('input,select').forEach(input => {
+        const fid = input.dataset.fieldId;
+        if (fid) p.custom[fid] = input.value;
+      });
+
+      // files
+      const fs = byId('pFiles').files;
+      for (let i=0;i<fs.length;i++) {
+        const f = fs[i];
+        const dataUrl = await dataURLFromFile(f);
+        p.files.push({ name:f.name, type:f.type, size:f.size, dataUrl });
+      }
+
+      ev.participants.push(p);
+      ev.analytics.signups.push(Date.now());
+      saveEvent(ev);
+      Session.participant = { eventId: ev.id, id: p.id, email: p.email, name: p.name };
+      renderParticipantDash(ev, p);
+      toast('You joined the event!', 'success');
+    };
+
+    function renderParticipantDash(ev, p) {
+      joinPane.classList.add('hidden');
+      const dash = byId('participantDash');
+      dash.classList.remove('hidden');
+      byId('pdTitle').textContent = ev.name;
+      byId('pdSub').textContent = `${new Date(ev.date).toLocaleString()} • ${ev.venue || '—'}`;
+      byId('pdPaid').textContent = p.paid ? 'Yes' : 'No';
+      byId('pdPaid').className = 'pill ' + (p.paid?'border-emerald-600 text-emerald-700':'border-gray-300 text-gray-600');
+      byId('pdSlot').textContent = p.slot?.order != null ? `#${p.slot.order+1}` : 'Pending';
+      byId('pdSlot').className = 'pill border-gray-300 text-gray-600';
+      // files
+      const list = byId('pdFiles'); list.innerHTML='';
+      (p.files||[]).forEach(f => {
+        const item = document.createElement('div');
+        item.innerHTML = `<a class="btn" download="${f.name}" href="${f.dataUrl}">${f.name}</a>`;
+        list.appendChild(item);
+      });
+
+      // Wire add files
+      byId('pdAddFiles').onchange = async (e) => {
+        const ev = loadEvent(Session.participant.eventId);
+        const me = ev.participants.find(x=>x.id===Session.participant.id);
+        const fs = e.target.files;
+        for (let i=0;i<fs.length;i++) {
+          const f = fs[i];
+          const dataUrl = await dataURLFromFile(f);
+          me.files.push({ name:f.name, type:f.type, size:f.size, dataUrl });
+        }
+        saveEvent(ev);
+        renderParticipantDash(ev, me);
+      };
+
+      // Buttons
+      byId('btnSendHostMsg').onclick = () => {
+        const text = byId('pdMsg').value.trim();
+        if (!text) return;
+        const ev = loadEvent(Session.participant.eventId);
+        ev.messages.push({ from: Session.participant.id, to:'admin', text, ts: Date.now() });
+        saveEvent(ev);
+        byId('pdMsg').value='';
+        toast('Message sent.','success');
+      };
+      byId('btnAddSong').onclick = () => {
+        const title = prompt('Song title?'); if (!title) return;
+        const artist = prompt('Artist?') || '';
+        const notes = prompt('Notes/Link?') || '';
+        const ev = loadEvent(Session.participant.eventId);
+        ev.songPool.unshift({ id: uid(), pid: Session.participant.id, title, artist, notes, ts: Date.now(), status:'queued' });
+        saveEvent(ev);
+        toast('Request added to DJ pool.','success');
+      };
+      byId('btnViewStagePass').onclick = () => openStagePass(ev.id, p.id);
+      byId('btnLeaveEvent').onclick = () => {
+        if (!confirm('Leave this event?')) return;
+        const ev = loadEvent(Session.participant.eventId);
+        ev.participants = ev.participants.filter(x=>x.id!==Session.participant.id);
+        saveEvent(ev);
+        Session.participant = null;
+        routeParticipantFromHash();
+        toast('You left the event.');
+      };
+    }
+
+    function openStagePass(eventId, pid) {
+      showParticipant();
+      const ev = loadEvent(eventId);
+      if (!ev) return toast('Event not found', 'error');
+      const p = ev.participants.find(x=>x.id===pid);
+      byId('stagePassPane').classList.remove('hidden');
+      byId('participantDash').classList.add('hidden');
+      byId('joinPane').classList.add('hidden');
+      const passQR = byId('passQR');
+      passQR.innerHTML='';
+      const url = `${location.href.split('#')[0]}#pass=${eventId}:${pid}`;
+      new QRCode(passQR, { width: 220, height: 220, text: url });
+      const wrap = document.createElement('div');
+      wrap.className = 'text-center';
+      wrap.innerHTML = `<div class="text-xl font-bold">${ev.name}</div>
+        <div class="text-sm text-gray-600">${new Date(ev.date).toLocaleString()} • ${ev.venue||'—'}</div>
+        <div class="mt-1">Performer: <span class="font-medium">${p?.name || pid}</span></div>`;
+      passQR.prepend(wrap);
+      byId('btnClosePass').onclick = () => {
+        byId('stagePassPane').classList.add('hidden');
+        if (Session.participant?.eventId === eventId && Session.participant?.id === pid) {
+          renderParticipantDash(ev, p);
+        } else {
+          routeParticipantFromHash();
+        }
+      };
+    }
+
+    /****************************
+     * EXPORT / IMPORT (GLOBAL)
+     ****************************/
+    byId('navExport').onclick = () => {
+      const dump = {
+        admins: DB.read(K.ADMINS, []),
+        events: DB.read(K.EVENTS, []),
+        blobs: DB.read(K.EVENTS, []).map(e => loadEvent(e.id))
+      };
+      download(`showflow_backup_${Date.now()}.json`, JSON.stringify(dump));
+    };
+    byId('importInput').onchange = async (e) => {
+      const f = e.target.files[0];
+      if (!f) return;
+      try {
+        const text = await f.text();
+        const dump = JSON.parse(text);
+        if (Array.isArray(dump.admins)) DB.write(K.ADMINS, dump.admins);
+        if (Array.isArray(dump.events)) DB.write(K.EVENTS, dump.events);
+        if (Array.isArray(dump.blobs)) dump.blobs.forEach(b => { if (b?.id) DB.write(K.EVENT(b.id), b); });
+        toast('Import completed. Reloading…','success');
+        setTimeout(()=>location.reload(), 800);
+      } catch (err) {
+        console.error(err);
+        toast('Import failed. Invalid JSON.','error');
+      }
+    };
+
+    /****************************
+     * STARTUP ROUTING
+     ****************************/
+    window.addEventListener('hashchange', () => {
+      if (location.hash.startsWith('#join=') || location.hash.startsWith('#pass=')) {
+        showParticipant();
+        routeParticipantFromHash();
+      }
+    });
+
+    // Initial view
+    if (location.hash.startsWith('#join=') || location.hash.startsWith('#pass=')) {
+      showParticipant();
+      routeParticipantFromHash();
+    } else {
+      showAdminAuth();
+    }
+  </script>
+</body>
+</html>
