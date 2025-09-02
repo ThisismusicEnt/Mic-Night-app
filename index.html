@@ -6,84 +6,68 @@
   <title>ShowFlow — Events, Randomizer & Signups (Single-File)</title>
   <meta name="description" content="All-in-one, single-file event manager for open mics, comedy shows, raffles, and random drawings. Admin + Participant dashboards, QR signups, files, messages, analytics." />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='128' height='128' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.5'%3E%3Cpath d='M4 4h16v16H4z'/%3E%3Cpath d='M7 7h10v3H7zM7 12h10v5H7z'/%3E%3C/svg%3E" />
-  <script>
-    if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-      document.documentElement.classList.add('dark');
-    }
-  </script>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     html, body { height: 100%; }
-    .glass { backdrop-filter: blur(8px); background: rgba(255,255,255,0.8); }
-    .btn { display:inline-flex; align-items:center; justify-content:center; padding:.5rem .75rem; border:1px solid #d1d5db; border-radius:.75rem; font-weight:500; transition: box-shadow .2s, border-color .2s, background .2s; }
-    .btn:hover { box-shadow:0 1px 2px rgba(0,0,0,.06); border-color:#9ca3af; }
-    .btn-primary { background:#000; color:#fff; border-color:#000; }
-    .btn-primary:hover { background:#111827; }
+    :root { --accent: #facc15; }
+    body { background:#000; color:#fff; }
+    .glass { backdrop-filter: blur(8px); background: rgba(0,0,0,0.6); }
+    .btn { display:inline-flex; align-items:center; justify-content:center; padding:.5rem .75rem; border:1px solid var(--accent); border-radius:.75rem; font-weight:500; transition: box-shadow .2s, border-color .2s, background .2s, color .2s; background:#000; color:var(--accent); cursor:pointer; }
+    .btn:hover { box-shadow:0 1px 2px rgba(250,204,21,.4); background:var(--accent); color:#000; }
+    .btn-primary { background:var(--accent); color:#000; border-color:var(--accent); }
+    .btn-primary:hover { background:#eab308; }
     .btn-danger { background:#dc2626; color:#fff; border-color:#b91c1c; }
     .btn-danger:hover { background:#b91c1c; }
-    .card { border:1px solid #e5e7eb; border-radius:1rem; padding:1rem; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,.03); }
+    .card { border:1px solid var(--accent); border-radius:1rem; padding:1rem; background:#111; box-shadow:0 1px 2px rgba(0,0,0,.5); }
     .grid-2 { display:grid; grid-template-columns:1fr; gap:1rem; }
     .grid-3 { display:grid; grid-template-columns:1fr; gap:1rem; }
     @media (min-width:768px) { .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))} .grid-3{grid-template-columns:repeat(3,minmax(0,1fr))} }
-    .pill { border:1px solid #e5e7eb; border-radius:9999px; padding:.125rem .5rem; font-size:.75rem; font-weight:600; }
-    .tab { padding:.5rem .75rem; border:1px solid #e5e7eb; border-radius:.75rem; }
-    .tab-active { background:#000; color:#fff; border-color:#000; }
-    .input { width:100%; border:1px solid #e5e7eb; border-radius:.75rem; padding:.5rem .75rem; outline:none; }
-    .input:focus { box-shadow:0 0 0 2px #0002; border-color:#000; }
-    .label { font-size:.75rem; font-weight:700; color:#6b7280; }
-    .table { width:100%; font-size:.875rem; border-collapse:collapse; }
-    .table th { text-align:left; color:#6b7280; font-weight:600; border-bottom:1px solid #e5e7eb; padding:.5rem .25rem; }
-    .table td { border-bottom:1px solid #f3f4f6; padding:.5rem .25rem; }
-    .kbd { display:inline-block; border:1px solid #e5e7eb; border-radius:.375rem; padding:0 .25rem; font-size:.75rem; background:#f9fafb; }
-    .divider { height:1px; background:#e5e7eb; margin:1rem 0; }
+    .pill { border:1px solid var(--accent); border-radius:9999px; padding:.125rem .5rem; font-size:.75rem; font-weight:600; color:var(--accent); background:#000; }
+    .tab { padding:.5rem .75rem; border:1px solid var(--accent); border-radius:.75rem; background:#000; color:var(--accent); cursor:pointer; transition: background .2s, color .2s; }
+    .tab:hover { background:var(--accent); color:#000; }
+    .tab-active { background:var(--accent); color:#000; border-color:var(--accent); }
+    .input { width:100%; border:1px solid var(--accent); border-radius:.75rem; padding:.5rem .75rem; outline:none; background:#000; color:#fff; }
+    .input:focus { box-shadow:0 0 0 2px rgba(250,204,21,0.3); border-color:var(--accent); }
+    .label { font-size:.75rem; font-weight:700; color:var(--accent); }
+    .table { width:100%; font-size:.875rem; border-collapse:collapse; color:#fff; }
+    .table th { text-align:left; color:var(--accent); font-weight:600; border-bottom:1px solid var(--accent); padding:.5rem .25rem; }
+    .table td { border-bottom:1px solid #333; padding:.5rem .25rem; }
+    .kbd { display:inline-block; border:1px solid var(--accent); border-radius:.375rem; padding:0 .25rem; font-size:.75rem; background:#111; color:var(--accent); }
+    .divider { height:1px; background:var(--accent); margin:1rem 0; }
     .hidden { display:none !important; }
-    html.dark body { background:#1f2937; color:#f9fafb; }
-    html.dark .card { background:#374151; border-color:#4b5563; color:#f3f4f6; }
-    html.dark .btn { border-color:#4b5563; }
-    html.dark .btn:hover { border-color:#6b7280; }
-    html.dark .btn-primary { background:#2563eb; border-color:#2563eb; }
-    html.dark .btn-primary:hover { background:#1d4ed8; }
-    html.dark .btn-danger { background:#dc2626; }
-    html.dark .btn-danger:hover { background:#b91c1c; }
-    html.dark .tab { border-color:#4b5563; }
-    html.dark .tab-active { background:#2563eb; border-color:#2563eb; color:#fff; }
-    html.dark .input { border-color:#4b5563; background:#1f2937; color:#f9fafb; }
-    html.dark .input:focus { box-shadow:0 0 0 2px #60a5fa; border-color:#3b82f6; }
-    html.dark .divider { background:#4b5563; }
   </style>
 </head>
-<body class="min-h-full bg-gradient-to-br from-gray-50 to-gray-100 text-gray-900 dark:from-gray-900 dark:to-gray-800 dark:text-gray-100">
+<body class="min-h-full bg-black text-white">
   <!-- Header -->
-  <header class="sticky top-0 z-40 bg-white/80 dark:bg-gray-900/80 backdrop-blur border-b border-gray-200 dark:border-gray-700">
-    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3">
+  <header class="sticky top-0 z-40 bg-black/90 backdrop-blur border-b border-yellow-500">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col sm:flex-row items-start sm:items-center gap-3">
       <div class="flex items-center gap-2">
-        <div class="w-8 h-8 rounded-lg bg-black text-white grid place-items-center font-bold">SF</div>
+        <div class="w-8 h-8 rounded-lg bg-yellow-500 text-black grid place-items-center font-bold">SF</div>
         <div class="font-semibold">ShowFlow</div>
       </div>
-      <nav class="ml-auto flex items-center gap-2">
+      <nav class="w-full sm:w-auto flex flex-wrap items-center gap-2 mt-2 sm:mt-0 sm:ml-auto">
         <button id="navAdmin" class="tab">Admin</button>
         <button id="navParticipant" class="tab">Participant</button>
-        <span class="text-gray-400">|</span>
+        <span class="text-yellow-500">|</span>
         <button id="navExport" class="tab" title="Export all data">Export</button>
         <label class="tab cursor-pointer" title="Import a previously exported JSON">
           <input id="importInput" type="file" accept="application/json" class="hidden" />
           Import
         </label>
-        <button id="navTheme" class="tab" title="Toggle dark mode">🌓</button>
       </nav>
     </div>
   </header>
 
   <main class="max-w-7xl mx-auto p-4 space-y-6">
     <!-- System banners -->
-    <div id="banner" class="hidden p-3 rounded-xl border bg-amber-50 text-amber-800"></div>
+    <div id="banner" class="hidden p-3 rounded-xl border border-yellow-500 bg-black text-yellow-500"></div>
 
     <!-- Admin Auth -->
     <section id="viewAdminAuth" class="card">
       <div class="grid-2">
         <div>
           <h2 class="text-xl font-bold">Admin Sign In</h2>
-          <p class="text-sm text-gray-600 mb-3">Welcome back. Authenticate to manage events.</p>
+          <p class="text-sm text-gray-300 mb-3">Welcome back. Authenticate to manage events.</p>
           <div class="space-y-2">
             <div>
               <label class="label">Email</label>
@@ -94,12 +78,12 @@
               <input id="loginPassword" type="password" class="input" placeholder="••••••••" />
             </div>
             <button id="btnLogin" class="btn btn-primary w-full">Sign In</button>
-            <p class="text-xs text-gray-500">Demo credentials auto-provisioned: <span class="kbd">admin@demo.app</span> / <span class="kbd">demo123</span></p>
+            <p class="text-xs text-gray-300">Demo credentials auto-provisioned: <span class="kbd">admin@demo.app</span> / <span class="kbd">demo123</span></p>
           </div>
         </div>
         <div>
           <h2 class="text-xl font-bold">Create Admin</h2>
-          <p class="text-sm text-gray-600 mb-3">Spin up a new organizer account.</p>
+          <p class="text-sm text-gray-300 mb-3">Spin up a new organizer account.</p>
           <div class="space-y-2">
             <div>
               <label class="label">Email</label>
@@ -121,7 +105,7 @@
         <div class="card">
           <div class="flex items-center justify-between">
             <h3 class="font-semibold">Create New Event</h3>
-            <span id="activeAdminEmail" class="text-xs text-gray-500"></span>
+            <span id="activeAdminEmail" class="text-xs text-gray-300"></span>
           </div>
           <div class="divider"></div>
           <!-- Wizard -->
@@ -182,7 +166,7 @@
               <div class="flex items-center justify-between">
                 <div>
                   <h4 class="font-semibold">Signup Form — Custom Fields</h4>
-                  <p class="text-xs text-gray-500">Add extra fields participants must fill.</p>
+                  <p class="text-xs text-gray-300">Add extra fields participants must fill.</p>
                 </div>
                 <button id="btnAddCustomField" class="btn">+ Field</button>
               </div>
@@ -208,7 +192,7 @@
         <div class="flex items-center justify-between flex-wrap gap-2">
           <div>
             <h3 id="edTitle" class="font-semibold text-lg">Event</h3>
-            <p id="edSubtitle" class="text-xs text-gray-500"></p>
+            <p id="edSubtitle" class="text-xs text-gray-300"></p>
           </div>
           <div class="flex items-center gap-2 flex-wrap">
             <button id="btnBackToEvents" class="btn">Back to Events</button>
@@ -226,26 +210,26 @@
             <div class="card">
               <h4 class="font-semibold mb-2">Participant QR</h4>
               <div id="eventQR" class="w-full grid place-items-center"></div>
-              <p class="text-xs text-gray-500 mt-2">Scan to join this exact event.</p>
+              <p class="text-xs text-gray-300 mt-2">Scan to join this exact event.</p>
             </div>
 
             <div class="card">
               <h4 class="font-semibold mb-2">Analytics</h4>
               <div class="grid grid-cols-2 gap-2 text-sm">
                 <div class="p-3 rounded-xl border bg-gray-50">
-                  <div class="text-gray-500">Signups</div>
+                  <div class="text-gray-300">Signups</div>
                   <div id="statSignups" class="text-2xl font-bold">0</div>
                 </div>
                 <div class="p-3 rounded-xl border bg-gray-50">
-                  <div class="text-gray-500">Paid</div>
+                  <div class="text-gray-300">Paid</div>
                   <div id="statPaid" class="text-2xl font-bold">0</div>
                 </div>
                 <div class="p-3 rounded-xl border bg-gray-50">
-                  <div class="text-gray-500">Revenue</div>
+                  <div class="text-gray-300">Revenue</div>
                   <div id="statRevenue" class="text-2xl font-bold">$0</div>
                 </div>
                 <div class="p-3 rounded-xl border bg-gray-50">
-                  <div class="text-gray-500">Requests</div>
+                  <div class="text-gray-300">Requests</div>
                   <div id="statRequests" class="text-2xl font-bold">0</div>
                 </div>
               </div>
@@ -441,7 +425,7 @@
     <section id="viewParticipant" class="hidden">
       <div id="joinPane" class="card">
         <h3 class="font-semibold text-lg">Join Event</h3>
-        <p id="joinEventTitle" class="text-sm text-gray-600">Loading event…</p>
+        <p id="joinEventTitle" class="text-sm text-gray-300">Loading event…</p>
 
         <div id="signupForm" class="mt-3 space-y-2">
           <div class="grid-2">
@@ -490,7 +474,7 @@
               </div>
               <button id="btnCheckout" class="btn btn-primary">Checkout</button>
             </div>
-            <p class="text-xs text-gray-500 mt-1">This is a demo checkout — no real charge. Marked as paid for the host to see.</p>
+            <p class="text-xs text-gray-300 mt-1">This is a demo checkout — no real charge. Marked as paid for the host to see.</p>
           </div>
 
           <button id="btnJoin" class="btn btn-primary w-full">Join Event</button>
@@ -502,7 +486,7 @@
           <div class="flex items-center justify-between">
             <div>
               <h3 id="pdTitle" class="font-semibold"></h3>
-              <p id="pdSub" class="text-xs text-gray-500"></p>
+              <p id="pdSub" class="text-xs text-gray-300"></p>
             </div>
             <div class="flex gap-2">
               <button id="btnViewStagePass" class="btn">Stage Pass</button>
@@ -541,7 +525,7 @@
         <div class="flex items-center justify-between">
           <div>
             <h3 class="font-semibold">Stage Pass</h3>
-            <p class="text-xs text-gray-500">Show this QR at the stage door.</p>
+            <p class="text-xs text-gray-300">Show this QR at the stage door.</p>
           </div>
           <button id="btnClosePass" class="btn">Close</button>
         </div>
@@ -550,7 +534,7 @@
     </section>
   </main>
 
-  <footer class="max-w-7xl mx-auto px-4 py-8 text-xs text-gray-500">
+  <footer class="max-w-7xl mx-auto px-4 py-8 text-xs text-gray-300">
     <div>ShowFlow single-file prototype. Data is stored locally in your browser (localStorage). For production, wire to your backend/payments and auth.</div>
   </footer>
 
@@ -668,7 +652,6 @@
     const navParticipant = byId('navParticipant');
     const viewAdminAuth = byId('viewAdminAuth');
     const viewAdminApp  = byId('viewAdminApp');
-    const navTheme = byId('navTheme');
     const viewParticipant = byId('viewParticipant');
 
     function showAdminAuth() {
@@ -699,10 +682,6 @@
     navParticipant.onclick = () => {
       showParticipant();
       routeParticipantFromHash();
-    };
-    navTheme.onclick = () => {
-      const dark = document.documentElement.classList.toggle('dark');
-      localStorage.theme = dark ? 'dark' : 'light';
     };
 
     /****************************
@@ -756,7 +735,7 @@
       eventsList.innerHTML = '';
       if (mine.length === 0) {
         const empty = document.createElement('div');
-        empty.className = 'text-sm text-gray-500';
+        empty.className = 'text-sm text-gray-300';
         empty.textContent = 'No events yet. Use the form at left to create one.';
         eventsList.appendChild(empty);
       } else {
@@ -766,7 +745,7 @@
           row.innerHTML = `
             <div>
               <div class="font-medium">${e.name}</div>
-              <div class="text-xs text-gray-500">${new Date(e.date || Date.now()).toLocaleString()} • ${e.venue || '—'}</div>
+              <div class="text-xs text-gray-300">${new Date(e.date || Date.now()).toLocaleString()} • ${e.venue || '—'}</div>
             </div>
             <div class="space-x-2">
               <button class="btn" data-open="${e.id}">Open</button>
@@ -1190,7 +1169,7 @@
         div.className = 'p-2 rounded-xl border bg-gray-50';
         const toHuman = m.to==='all' ? 'All' : (ev.participants.find(p=>p.id===m.to)?.name || m.to);
         const fromHuman = m.from==='admin' ? 'Host' : (ev.participants.find(p=>p.id===m.from)?.name || m.from);
-        div.innerHTML = `<div class="text-xs text-gray-500">${fromHuman} → ${toHuman} • ${new Date(m.ts).toLocaleString()}</div><div>${m.text}</div>`;
+        div.innerHTML = `<div class="text-xs text-gray-300">${fromHuman} → ${toHuman} • ${new Date(m.ts).toLocaleString()}</div><div>${m.text}</div>`;
         messagesList.appendChild(div);
       });
     }
@@ -1207,7 +1186,7 @@
           card.className = 'border rounded-xl p-2';
           const isImage = /^image\//.test(f.type);
           card.innerHTML = `
-            <div class="text-xs text-gray-500">${p.name} • ${f.name} • ${(f.size||0)} bytes</div>
+            <div class="text-xs text-gray-300">${p.name} • ${f.name} • ${(f.size||0)} bytes</div>
             <div class="mt-1">${isImage ? `<img src="${f.dataUrl}" alt="" class="rounded-lg max-h-32">` : `<div class="text-xs">(${f.type})</div>`}</div>
             <div class="mt-2"><a class="btn" download="${f.name}" href="${f.dataUrl}">Download</a></div>
           `;
@@ -1277,7 +1256,7 @@
         card.className = 'border rounded-xl p-2 flex items-center justify-between';
         card.innerHTML = `<div>
           <div class="font-medium">${req.title} — ${req.artist || 'Unknown'}</div>
-          <div class="text-xs text-gray-500">By ${p?.name || req.pid} • ${new Date(req.ts).toLocaleString()}</div>
+          <div class="text-xs text-gray-300">By ${p?.name || req.pid} • ${new Date(req.ts).toLocaleString()}</div>
         </div>
         <div class="space-x-1">
           <span class="pill">${req.status||'queued'}</span>
@@ -1327,10 +1306,10 @@
         const p = ev.participants.find(x=>x.id===r.pid);
         const card = document.createElement('div');
         card.className = 'border rounded-xl p-3';
-        card.innerHTML = `<div class="text-xs text-gray-500">${new Date(r.ts).toLocaleString()}</div>
+        card.innerHTML = `<div class="text-xs text-gray-300">${new Date(r.ts).toLocaleString()}</div>
           <div class="font-medium">${r.title} ${r.points?`• ${r.points} pts`:''}</div>
           <div class="text-sm">${r.desc||''}</div>
-          <div class="text-xs text-gray-500 mt-1">For: ${p?.name || r.pid}</div>`;
+          <div class="text-xs text-gray-300 mt-1">For: ${p?.name || r.pid}</div>`;
         rewardsList.appendChild(card);
       });
     }
@@ -1410,7 +1389,7 @@
         row.className = 'border rounded-xl p-2 flex items-center justify-between';
         row.innerHTML = `<div>
           <div class="font-medium">${v.code} <span class="pill">${v.type} ${v.amount}</span></div>
-          <div class="text-xs text-gray-500">${v.desc||''}</div>
+          <div class="text-xs text-gray-300">${v.desc||''}</div>
         </div>
         <div class="space-x-1">
           <button class="btn" data-toggle="${v.code}">${v.active?'Deactivate':'Activate'}</button>
@@ -1459,7 +1438,7 @@
       const ev = loadEvent(eventId);
       if (!ev) { joinEventTitle.textContent='Event not found.'; return; }
       Session.participant = { eventId };
-      joinEventTitle.innerHTML = `<span class="font-medium">${ev.name}</span> — ${new Date(ev.date).toLocaleString()} • ${ev.venue || '—'}<br><span class="text-xs text-gray-500">${ev.rules||''}</span>`;
+      joinEventTitle.innerHTML = `<span class="font-medium">${ev.name}</span> — ${new Date(ev.date).toLocaleString()} • ${ev.venue || '—'}<br><span class="text-xs text-gray-300">${ev.rules||''}</span>`;
       payPane.classList.toggle('hidden', !ev.payments?.required);
       slotPrice.textContent = fmt(ev.payments?.price || 0, ev.payments?.currency || 'USD');
       // Custom fields
@@ -1548,9 +1527,9 @@
       byId('pdTitle').textContent = ev.name;
       byId('pdSub').textContent = `${new Date(ev.date).toLocaleString()} • ${ev.venue || '—'}`;
       byId('pdPaid').textContent = p.paid ? 'Yes' : 'No';
-      byId('pdPaid').className = 'pill ' + (p.paid?'border-emerald-600 text-emerald-700':'border-gray-300 text-gray-600');
+      byId('pdPaid').className = 'pill ' + (p.paid?'border-emerald-600 text-emerald-700':'border-gray-300 text-gray-300');
       byId('pdSlot').textContent = p.slot?.order != null ? `#${p.slot.order+1}` : 'Pending';
-      byId('pdSlot').className = 'pill border-gray-300 text-gray-600';
+      byId('pdSlot').className = 'pill border-gray-300 text-gray-300';
       // files
       const list = byId('pdFiles'); list.innerHTML='';
       (p.files||[]).forEach(f => {
@@ -1619,7 +1598,7 @@
       const wrap = document.createElement('div');
       wrap.className = 'text-center';
       wrap.innerHTML = `<div class="text-xl font-bold">${ev.name}</div>
-        <div class="text-sm text-gray-600">${new Date(ev.date).toLocaleString()} • ${ev.venue||'—'}</div>
+        <div class="text-sm text-gray-300">${new Date(ev.date).toLocaleString()} • ${ev.venue||'—'}</div>
         <div class="mt-1">Performer: <span class="font-medium">${p?.name || pid}</span></div>`;
       passQR.prepend(wrap);
       byId('btnClosePass').onclick = () => {
