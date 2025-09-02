@@ -230,7 +230,7 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
           <!-- Left column: QR & Analytics -->
-          <div class="space-y-4">
+          <div class="space-y-4 order-2 lg:order-1">
             <div class="card">
               <h4 class="font-semibold mb-2">Participant QR</h4>
               <div id="eventQR" class="w-full grid place-items-center"></div>
@@ -262,8 +262,8 @@
           </div>
 
           <!-- Right column: Tabs -->
-          <div class="lg:col-span-3 space-y-4">
-            <div class="flex flex-wrap gap-2">
+          <div class="lg:col-span-3 space-y-4 order-1 lg:order-2">
+            <div class="flex flex-wrap gap-2 sticky top-0 bg-gray-50 py-2 z-10">
               <button data-tab="tab-participants" class="tab tab-active">Participants</button>
               <button data-tab="tab-randomizer" class="tab">Randomizer</button>
               <button data-tab="tab-messages" class="tab">Messenger</button>
@@ -1095,7 +1095,12 @@
         tabs.forEach(b => b.classList.remove('tab-active'));
         btn.classList.add('tab-active');
         ['tab-participants','tab-randomizer','tab-messages','tab-files','tab-setlist','tab-djpool','tab-rewards','tab-forms','tab-vouchers']
-          .forEach(tid => byId(tid).classList.toggle('hidden', tid !== id));
+          .forEach(tid => {
+            const el = byId(tid);
+            if (!el) return;
+            if (tid === id) el.classList.remove('hidden');
+            else el.classList.add('hidden');
+          });
       };
       tabs.forEach(btn => {
         btn.onclick = () => show(btn);
