@@ -1,0 +1,8 @@
+{
+  "name": "mic-night-app",
+  "version": "1.0.0",
+  "description": "Mic Night app single-file project",
+  "scripts": {
+    "test": "echo 'No tests configured'"
+  }
+}
