@@ -108,16 +108,31 @@
     </section>
 
     <!-- Admin App shell -->
-    <section id="viewAdminApp" class="hidden">
-      <div class="grid-3">
-        <div class="card">
-          <div class="flex items-center justify-between">
-            <h3 class="font-semibold">Create New Event</h3>
+    <section id="viewAdminApp" class="hidden space-y-6">
+      <!-- Events List Page -->
+      <div id="adminEventsPage" class="card">
+        <div class="flex items-center justify-between flex-wrap gap-2">
+          <div>
+            <h3 class="font-semibold">Your Events</h3>
             <span id="activeAdminEmail" class="text-xs text-gray-300"></span>
           </div>
-          <div class="divider"></div>
-          <!-- Wizard -->
-          <div id="wizard" class="space-y-3">
+          <div class="space-x-2">
+            <button id="btnNewEvent" class="btn btn-primary">Create Event</button>
+            <button id="btnLogout" class="btn">Sign Out</button>
+          </div>
+        </div>
+        <div id="eventsList" class="mt-3 space-y-2"></div>
+      </div>
+
+      <!-- Create Event Page -->
+      <div id="adminCreatePage" class="card hidden max-w-3xl mx-auto">
+        <div class="flex items-center justify-between flex-wrap gap-2">
+          <h3 class="font-semibold">Create New Event</h3>
+          <button id="btnBackEvents" class="btn">&larr; Back</button>
+        </div>
+        <div class="divider"></div>
+        <!-- Wizard -->
+        <div id="wizard" class="space-y-3">
             <div class="grid-2">
               <div>
                 <label class="label">Event Name</label>
@@ -182,21 +197,11 @@
             </div>
 
             <button id="btnCreateEvent" class="btn btn-primary w-full">Create Event</button>
-          </div>
-        </div>
-
-        <div class="card col-span-2">
-          <div class="flex items-center justify-between">
-            <h3 class="font-semibold">Your Events</h3>
-            <div class="space-x-2">
-              <button id="btnLogout" class="btn">Sign Out</button>
-            </div>
-          </div>
-          <div id="eventsList" class="mt-3 space-y-2"></div>
         </div>
       </div>
-<!-- Event Dashboard -->
-      <div id="eventDashboard" class="hidden card mt-4">
+
+      <!-- Event Dashboard -->
+      <div id="eventDashboard" class="hidden card">
         <div class="flex items-center justify-between flex-wrap gap-2">
           <div>
             <h3 id="edTitle" class="font-semibold text-lg">Event</h3>
@@ -685,6 +690,7 @@
       navAdmin.classList.add('tab-active');
       navParticipant.classList.remove('tab-active');
       navEvents.classList.remove('tab-active');
+      showAdminEventsPage();
     }
     function showParticipant() {
       viewAdminAuth.classList.add('hidden');
@@ -728,7 +734,6 @@
       const found = admins.find(a => a.email === email && a.password === pass);
       if (!found) return toast('Invalid credentials', 'error');
       Session.admin = found;
-      renderAdminApp();
       showAdminApp();
       toast('Signed in.', 'success');
     };
@@ -743,7 +748,6 @@
       admins.push(admin);
       DB.write(K.ADMINS, admins);
       Session.admin = admin;
-      renderAdminApp();
       showAdminApp();
       toast('Account created.', 'success');
     };
@@ -761,6 +765,11 @@
     const activeAdminEmail = byId('activeAdminEmail');
     const eventsList = byId('eventsList');
     const publicEventsList = byId('publicEventsList');
+    const adminEventsPage = byId('adminEventsPage');
+    const adminCreatePage = byId('adminCreatePage');
+    const btnNewEvent = byId('btnNewEvent');
+    const btnBackEvents = byId('btnBackEvents');
+    const eventDashboard = byId('eventDashboard');
 
     function renderAdminApp() {
       activeAdminEmail.textContent = Session.admin?.email || '';
@@ -771,7 +780,7 @@
       if (mine.length === 0) {
         const empty = document.createElement('div');
         empty.className = 'text-sm text-gray-300';
-        empty.textContent = 'No events yet. Use the form at left to create one.';
+        empty.textContent = 'No events yet. Click "Create Event" to get started.';
         eventsList.appendChild(empty);
       } else {
         mine.forEach(e => {
@@ -791,6 +800,22 @@
         eventsList.querySelectorAll('[data-open]').forEach(btn => btn.onclick = () => openEvent(btn.dataset.open));
       }
     }
+
+    function showAdminEventsPage() {
+      adminCreatePage.classList.add('hidden');
+      adminEventsPage.classList.remove('hidden');
+      eventDashboard.classList.add('hidden');
+      renderAdminApp();
+    }
+
+    function showAdminCreatePage() {
+      adminEventsPage.classList.add('hidden');
+      eventDashboard.classList.add('hidden');
+      adminCreatePage.classList.remove('hidden');
+    }
+
+    btnNewEvent.onclick = showAdminCreatePage;
+    btnBackEvents.onclick = showAdminEventsPage;
 
     function renderPublicEvents() {
       publicEventsList.innerHTML = '';
@@ -897,12 +922,11 @@
         customFields
       });
       saveEvent(ev);
-      renderAdminApp();
+      showAdminEventsPage();
       openEvent(ev.id);
       toast('Event created.', 'success');
     };
 // Open event
-    const eventDashboard = byId('eventDashboard');
     const edTitle = byId('edTitle');
     const edSubtitle = byId('edSubtitle');
     const eventQR = byId('eventQR');
@@ -973,8 +997,7 @@
     }
 
     byId('btnBackToEvents').onclick = () => {
-      eventDashboard.classList.add('hidden');
-      renderAdminApp();
+      showAdminEventsPage();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
@@ -998,8 +1021,7 @@
       const all = DB.read(K.EVENTS, []).filter(e => e.id !== id);
       DB.write(K.EVENTS, all);
       Session.currentEventId = null;
-      eventDashboard.classList.add('hidden');
-      renderAdminApp();
+      showAdminEventsPage();
       toast('Event deleted.', 'success');
     };
 
