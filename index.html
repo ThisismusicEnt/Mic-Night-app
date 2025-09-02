@@ -53,7 +53,7 @@
         <div class="font-semibold">ShowFlow</div>
       </div>
       <nav class="w-full sm:w-auto flex flex-nowrap overflow-x-auto items-center gap-2 mt-2 sm:mt-0 sm:ml-auto">
-        <button id="navAdmin" class="tab">Admin</button>
+        <button id="navAdmin" class="tab hidden">Admin</button>
         <button id="navParticipant" class="tab">Participant</button>
         <button id="navEvents" class="tab">Events</button>
         <span class="text-blue-600">|</span>
@@ -109,6 +109,10 @@
 
     <!-- Admin App shell -->
     <section id="viewAdminApp" class="hidden space-y-6">
+      <div id="adminTabs" class="flex gap-2">
+        <button id="tabEvents" class="tab tab-active">Events</button>
+        <button id="tabCreate" class="tab">Create Event</button>
+      </div>
       <!-- Events List Page -->
       <div id="adminEventsPage" class="card">
         <div class="flex items-center justify-between flex-wrap gap-2">
@@ -117,7 +121,6 @@
             <span id="activeAdminEmail" class="text-xs text-gray-300"></span>
           </div>
           <div class="space-x-2">
-            <button id="btnNewEvent" class="btn btn-primary">Create Event</button>
             <button id="btnLogout" class="btn">Sign Out</button>
           </div>
         </div>
@@ -128,7 +131,6 @@
       <div id="adminCreatePage" class="card hidden max-w-3xl mx-auto">
         <div class="flex items-center justify-between flex-wrap gap-2">
           <h3 class="font-semibold">Create New Event</h3>
-          <button id="btnBackEvents" class="btn">&larr; Back</button>
         </div>
         <div class="divider"></div>
         <!-- Wizard -->
@@ -672,8 +674,11 @@
     const viewAdminApp  = byId('viewAdminApp');
     const viewParticipant = byId('viewParticipant');
     const viewEvents = byId('viewEvents');
+    const tabEvents = byId('tabEvents');
+    const tabCreate = byId('tabCreate');
 
     function showAdminAuth() {
+      navAdmin.classList.remove('hidden');
       viewAdminAuth.classList.remove('hidden');
       viewAdminApp.classList.add('hidden');
       viewParticipant.classList.add('hidden');
@@ -683,6 +688,7 @@
       navEvents.classList.remove('tab-active');
     }
     function showAdminApp() {
+      navAdmin.classList.remove('hidden');
       viewAdminAuth.classList.add('hidden');
       viewAdminApp.classList.remove('hidden');
       viewParticipant.classList.add('hidden');
@@ -697,6 +703,7 @@
       viewAdminApp.classList.add('hidden');
       viewParticipant.classList.remove('hidden');
       viewEvents.classList.add('hidden');
+      if (!Session.admin) navAdmin.classList.add('hidden');
       navAdmin.classList.remove('tab-active');
       navParticipant.classList.add('tab-active');
       navEvents.classList.remove('tab-active');
@@ -707,6 +714,7 @@
       viewAdminApp.classList.add('hidden');
       viewParticipant.classList.add('hidden');
       viewEvents.classList.remove('hidden');
+      if (!Session.admin) navAdmin.classList.add('hidden');
       navAdmin.classList.remove('tab-active');
       navParticipant.classList.remove('tab-active');
       navEvents.classList.add('tab-active');
@@ -755,7 +763,8 @@
     byId('btnLogout').onclick = () => {
       Session.admin = null;
       Session.currentEventId = null;
-      showAdminAuth();
+       navAdmin.classList.add('hidden');
+      showEvents();
       toast('Signed out.');
     };
 
@@ -767,8 +776,6 @@
     const publicEventsList = byId('publicEventsList');
     const adminEventsPage = byId('adminEventsPage');
     const adminCreatePage = byId('adminCreatePage');
-    const btnNewEvent = byId('btnNewEvent');
-    const btnBackEvents = byId('btnBackEvents');
     const eventDashboard = byId('eventDashboard');
 
     function renderAdminApp() {
@@ -805,6 +812,8 @@
       adminCreatePage.classList.add('hidden');
       adminEventsPage.classList.remove('hidden');
       eventDashboard.classList.add('hidden');
+      tabEvents.classList.add('tab-active');
+      tabCreate.classList.remove('tab-active');
       renderAdminApp();
     }
 
@@ -812,10 +821,12 @@
       adminEventsPage.classList.add('hidden');
       eventDashboard.classList.add('hidden');
       adminCreatePage.classList.remove('hidden');
+      tabCreate.classList.add('tab-active');
+      tabEvents.classList.remove('tab-active');
     }
-
-    btnNewEvent.onclick = showAdminCreatePage;
-    btnBackEvents.onclick = showAdminEventsPage;
+    
+    tabEvents.onclick = showAdminEventsPage;
+    tabCreate.onclick = showAdminCreatePage;
 
     function renderPublicEvents() {
       publicEventsList.innerHTML = '';
@@ -1765,15 +1776,21 @@
       if (location.hash.startsWith('#join=') || location.hash.startsWith('#pass=')) {
         showParticipant();
         routeParticipantFromHash();
+      } else if (location.hash === '#admin') {
+        showAdminAuth();
+      } else {
+        showEvents();
       }
     });
 
     // Initial view
-    if (location.hash.startsWith('#join=') || location.hash.startsWith('#pass=')) {
+    if (location.hash === '#admin') {
+      showAdminAuth();
+    } else if (location.hash.startsWith('#join=') || location.hash.startsWith('#pass=')) {
       showParticipant();
       routeParticipantFromHash();
     } else {
-      showAdminAuth();
+      showEvents();
     }
   </script>
 </body>
