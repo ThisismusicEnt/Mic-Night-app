@@ -69,9 +69,18 @@
   <main class="max-w-7xl mx-auto p-4 space-y-6">
     <!-- System banners -->
       <div id="banner" class="hidden p-3 rounded-xl border border-blue-600 bg-white text-blue-600"></div>
+    <!-- Landing -->
+    <section id="viewLanding" class="card text-center space-y-4">
+      <h2 class="text-xl font-bold">Welcome to ShowFlow</h2>
+      <p class="text-sm text-gray-600">Are you an admin or a participant?</p>
+      <div class="flex justify-center gap-4">
+        <button id="btnLandingAdmin" class="btn">Admin</button>
+        <button id="btnLandingParticipant" class="btn">Participant</button>
+      </div>
+    </section>
 
     <!-- Admin Auth -->
-    <section id="viewAdminAuth" class="card">
+    <section id="viewAdminAuth" class="card hidden">
       <div class="grid-2">
         <div>
           <h2 class="text-xl font-bold">Admin Sign In</h2>
@@ -671,6 +680,7 @@
     const navAdmin = byId('navAdmin');
     const navParticipant = byId('navParticipant');
     const navEvents = byId('navEvents');
+    const viewLanding = byId('viewLanding');
     const viewAdminAuth = byId('viewAdminAuth');
     const viewAdminApp  = byId('viewAdminApp');
     const viewParticipant = byId('viewParticipant');
@@ -678,8 +688,20 @@
     const tabEvents = byId('tabEvents');
     const tabCreate = byId('tabCreate');
 
+    function showLanding() {
+      viewLanding.classList.remove('hidden');
+      viewAdminAuth.classList.add('hidden');
+      viewAdminApp.classList.add('hidden');
+      viewParticipant.classList.add('hidden');
+      viewEvents.classList.add('hidden');
+      navAdmin.classList.remove('tab-active');
+      navParticipant.classList.remove('tab-active');
+      navEvents.classList.remove('tab-active');
+    }
+
     function showAdminAuth() {
       navAdmin.classList.remove('hidden');
+      viewLanding.classList.add('hidden');
       viewAdminAuth.classList.remove('hidden');
       viewAdminApp.classList.add('hidden');
       viewParticipant.classList.add('hidden');
@@ -690,6 +712,7 @@
     }
     function showAdminApp() {
       navAdmin.classList.remove('hidden');
+      viewLanding.classList.add('hidden');
       viewAdminAuth.classList.add('hidden');
       viewAdminApp.classList.remove('hidden');
       viewParticipant.classList.add('hidden');
@@ -700,6 +723,7 @@
       showAdminEventsPage();
     }
     function showParticipant() {
+      viewLanding.classList.add('hidden');
       viewAdminAuth.classList.add('hidden');
       viewAdminApp.classList.add('hidden');
       viewParticipant.classList.remove('hidden');
@@ -711,6 +735,7 @@
     }
 
     function showEvents() {
+      viewLanding.classList.add('hidden');
       viewAdminAuth.classList.add('hidden');
       viewAdminApp.classList.add('hidden');
       viewParticipant.classList.add('hidden');
@@ -731,6 +756,12 @@
     };
     navEvents.onclick = () => {
       showEvents();
+    };
+    byId('btnLandingAdmin').onclick = () => {
+      location.hash = '#admin';
+    };
+    byId('btnLandingParticipant').onclick = () => {
+      location.hash = '#events';
     };
 
     /****************************
@@ -1784,6 +1815,8 @@
         routeParticipantFromHash();
       } else if (location.hash === '#admin') {
         showAdminAuth();
+      } else if (!location.hash) {
+        showLanding();
       } else {
         showEvents();
       }
@@ -1795,6 +1828,8 @@
     } else if (location.hash.startsWith('#join=') || location.hash.startsWith('#pass=')) {
       showParticipant();
       routeParticipantFromHash();
+    } else if (!location.hash) {
+      showLanding();
     } else {
       showEvents();
     }
