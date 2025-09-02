@@ -55,6 +55,7 @@
       <nav class="w-full sm:w-auto flex flex-nowrap overflow-x-auto items-center gap-2 mt-2 sm:mt-0 sm:ml-auto">
         <button id="navAdmin" class="tab">Admin</button>
         <button id="navParticipant" class="tab">Participant</button>
+        <button id="navEvents" class="tab">Events</button>
         <span class="text-blue-600">|</span>
         <button id="navExport" class="tab" title="Export all data">Export</button>
         <label class="tab cursor-pointer" title="Import a previously exported JSON">
@@ -536,8 +537,12 @@
           </div>
           <button id="btnClosePass" class="btn">Close</button>
         </div>
-        <div id="passQR" class="mt-3 grid place-items-center"></div>
+      <div id="passQR" class="mt-3 grid place-items-center"></div>
       </div>
+    </section>
+    <section id="viewEvents" class="hidden card">
+      <h3 class="font-semibold text-lg">Events</h3>
+      <div id="publicEventsList" class="mt-3 space-y-2"></div>
     </section>
   </main>
 
@@ -657,30 +662,49 @@
      ****************************/
     const navAdmin = byId('navAdmin');
     const navParticipant = byId('navParticipant');
+    const navEvents = byId('navEvents');
     const viewAdminAuth = byId('viewAdminAuth');
     const viewAdminApp  = byId('viewAdminApp');
     const viewParticipant = byId('viewParticipant');
+    const viewEvents = byId('viewEvents');
 
     function showAdminAuth() {
       viewAdminAuth.classList.remove('hidden');
       viewAdminApp.classList.add('hidden');
       viewParticipant.classList.add('hidden');
+      viewEvents.classList.add('hidden');
       navAdmin.classList.add('tab-active');
       navParticipant.classList.remove('tab-active');
+      navEvents.classList.remove('tab-active');
     }
     function showAdminApp() {
       viewAdminAuth.classList.add('hidden');
       viewAdminApp.classList.remove('hidden');
       viewParticipant.classList.add('hidden');
+      viewEvents.classList.add('hidden');
       navAdmin.classList.add('tab-active');
       navParticipant.classList.remove('tab-active');
+      navEvents.classList.remove('tab-active');
     }
     function showParticipant() {
       viewAdminAuth.classList.add('hidden');
       viewAdminApp.classList.add('hidden');
       viewParticipant.classList.remove('hidden');
+      viewEvents.classList.add('hidden');
       navAdmin.classList.remove('tab-active');
       navParticipant.classList.add('tab-active');
+      navEvents.classList.remove('tab-active');
+    }
+
+    function showEvents() {
+      viewAdminAuth.classList.add('hidden');
+      viewAdminApp.classList.add('hidden');
+      viewParticipant.classList.add('hidden');
+      viewEvents.classList.remove('hidden');
+      navAdmin.classList.remove('tab-active');
+      navParticipant.classList.remove('tab-active');
+      navEvents.classList.add('tab-active');
+      renderPublicEvents();
     }
 
     navAdmin.onclick = () => {
@@ -689,6 +713,9 @@
     navParticipant.onclick = () => {
       showParticipant();
       routeParticipantFromHash();
+    };
+    navEvents.onclick = () => {
+      showEvents();
     };
 
     /****************************
@@ -733,6 +760,7 @@
      ****************************/
     const activeAdminEmail = byId('activeAdminEmail');
     const eventsList = byId('eventsList');
+    const publicEventsList = byId('publicEventsList');
 
     function renderAdminApp() {
       activeAdminEmail.textContent = Session.admin?.email || '';
@@ -764,6 +792,37 @@
       }
     }
 
+    function renderPublicEvents() {
+      publicEventsList.innerHTML = '';
+      const events = DB.read(K.EVENTS, []);
+      if (events.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'text-sm text-gray-300';
+        empty.textContent = 'No events available.';
+        publicEventsList.appendChild(empty);
+      } else {
+        events.forEach(e => {
+          const row = document.createElement('div');
+          row.className = 'border rounded-xl p-3 flex items-center justify-between';
+          row.innerHTML = `
+            <div>
+              <div class="font-medium">${e.name}</div>
+              <div class="text-xs text-gray-300">${new Date(e.date || Date.now()).toLocaleString()} • ${e.venue || '—'}</div>
+            </div>
+            <div>
+              <button class="btn" data-join="${e.id}">Join</button>
+            </div>
+          `;
+          publicEventsList.appendChild(row);
+        });
+        publicEventsList.querySelectorAll('[data-join]').forEach(btn => btn.onclick = () => {
+          location.hash = 'join=' + btn.dataset.join;
+          showParticipant();
+          routeParticipantFromHash();
+        });
+      }
+    }
+
     // Custom field builders
     function addCustomFieldChip(container, field) {
       const row = document.createElement('div');
@@ -779,21 +838,27 @@
     }
 
     byId('btnAddCustomField').onclick = () => {
-      const id = uid();
       const container = byId('customFields');
-      const field = { id, type: 'text', label: 'Custom field', required: false };
       const row = document.createElement('div');
-      row.className = 'grid-3 gap-2 border rounded-xl p-2';
+      row.className = 'grid grid-cols-1 md:grid-cols-4 gap-2 border rounded-xl p-2';
       row.innerHTML = `
-        <input class="input" placeholder="Field label" value="${field.label}" />
-        <select class="input">
+        <input class="input cf-label" placeholder="Field label" value="Custom field" />
+        <select class="input cf-type">
           <option value="text">Text</option>
           <option value="number">Number</option>
-          <option value="select">Select (comma options)</option>
+          <option value="email">Email</option>
+          <option value="date">Date</option>
+          <option value="textarea">Textarea</option>
+          <option value="checkbox">Checkbox</option>
+          <option value="select">Select</option>
         </select>
-        <label class="flex items-center gap-2 text-sm"><input type="checkbox" />Required</label>
+        <input class="input cf-options hidden" placeholder="Options (comma separated)" />
+        <label class="flex items-center gap-2 text-sm"><input type="checkbox" class="cf-required" />Required</label>
       `;
       container.appendChild(row);
+      const typeEl = row.querySelector('.cf-type');
+      const optsEl = row.querySelector('.cf-options');
+      typeEl.onchange = () => optsEl.classList.toggle('hidden', typeEl.value !== 'select');
     };
 
     byId('btnCreateEvent').onclick = () => {
@@ -811,15 +876,17 @@
       // collect custom fields
       const cfRows = Array.from(byId('customFields').children);
       const customFields = cfRows.map(r => {
-        const inputs = r.querySelectorAll('input,select');
-        const labelEl = inputs[0];
-        const typeEl  = inputs[1];
-        const reqEl   = inputs[2];
+        const labelEl = r.querySelector('.cf-label');
+        const typeEl  = r.querySelector('.cf-type');
+        const optsEl  = r.querySelector('.cf-options');
+        const reqEl   = r.querySelector('.cf-required');
+        const type = typeEl?.value || 'text';
         return {
           id: uid(),
           label: (labelEl?.value || 'Custom field').trim(),
-          type: typeEl?.value || 'text',
-          required: !!reqEl?.checked
+          type,
+          required: !!reqEl?.checked,
+          options: type === 'select' ? (optsEl?.value || '').split(',').map(o=>o.trim()).filter(Boolean) : []
         };
       });
 
@@ -1328,7 +1395,7 @@
       const ev = loadEvent(Session.currentEventId);
       if (!ev) return;
       ev.customFields = ev.customFields || [];
-      ev.customFields.push({ id: uid(), label:'New Field', type:'text', required:false });
+      ev.customFields.push({ id: uid(), label:'New Field', type:'text', required:false, options: [] });
       saveEvent(ev);
       renderCustomFieldsManage(ev);
       toast('Field added.','success');
@@ -1337,29 +1404,36 @@
       customFieldsManage.innerHTML='';
       (ev.customFields||[]).forEach(f => {
         const row = document.createElement('div');
-        row.className = 'grid-3 gap-2 border rounded-xl p-2';
+        row.className = 'grid grid-cols-1 md:grid-cols-4 gap-2 border rounded-xl p-2';
         row.innerHTML = `
-          <input class="input" value="${f.label}" />
-          <select class="input">
+          <input class="input cf-label" value="${f.label}" />
+          <select class="input cf-type">
             <option value="text" ${f.type==='text'?'selected':''}>Text</option>
             <option value="number" ${f.type==='number'?'selected':''}>Number</option>
+            <option value="email" ${f.type==='email'?'selected':''}>Email</option>
+            <option value="date" ${f.type==='date'?'selected':''}>Date</option>
+            <option value="textarea" ${f.type==='textarea'?'selected':''}>Textarea</option>
+            <option value="checkbox" ${f.type==='checkbox'?'selected':''}>Checkbox</option>
             <option value="select" ${f.type==='select'?'selected':''}>Select</option>
           </select>
-          <div class="flex items-center gap-2"><input type="checkbox" ${f.required?'checked':''}/> <span class="text-sm">Required</span></div>
-          <div class="col-span-3">
+          <input class="input cf-options ${f.type==='select'?'':'hidden'}" value="${(f.options||[]).join(', ')}" placeholder="Options (comma separated)" />
+          <div class="flex items-center gap-2"><input type="checkbox" class="cf-required" ${f.required?'checked':''}/> <span class="text-sm">Required</span></div>
+          <div class="col-span-1 md:col-span-4">
             <button class="btn" data-save="${f.id}">Save</button>
             <button class="btn btn-danger" data-del="${f.id}">Delete</button>
           </div>
         `;
         customFieldsManage.appendChild(row);
-        const inputs = row.querySelectorAll('input,select');
-        const labelEl = inputs[0];
-        const typeEl  = inputs[1];
-        const reqEl   = inputs[2];
+        const labelEl = row.querySelector('.cf-label');
+        const typeEl  = row.querySelector('.cf-type');
+        const optsEl  = row.querySelector('.cf-options');
+        const reqEl   = row.querySelector('.cf-required');
+        typeEl.onchange = () => optsEl.classList.toggle('hidden', typeEl.value !== 'select');
         row.querySelector('[data-save]').onclick = () => {
           f.label = (labelEl.value || 'Field').trim();
           f.type = typeEl.value;
           f.required = !!reqEl.checked;
+          f.options = typeEl.value === 'select' ? (optsEl.value || '').split(',').map(o=>o.trim()).filter(Boolean) : [];
           saveEvent(ev);
           toast('Saved.','success');
         };
@@ -1451,20 +1525,36 @@
       // Custom fields
       signupCustomFields.innerHTML='';
       (ev.customFields||[]).forEach(f => {
-        const row = document.createElement('div');
-        row.innerHTML = `<label class="label">${f.label} ${f.required?'<span class="text-red-600">*</span>':''}</label>`;
-        let input;
-        if (f.type==='select') {
-          input = document.createElement('select');
-          input.className = 'input';
-          input.innerHTML = '<option>Option 1</option><option>Option 2</option>';
-        } else {
+        let row, input;
+        if (f.type === 'checkbox') {
+          row = document.createElement('label');
+          row.className = 'flex items-center gap-2 text-sm';
           input = document.createElement('input');
-          input.type = f.type==='number' ? 'number' : 'text';
-          input.className = 'input';
+          input.type = 'checkbox';
+          row.appendChild(input);
+          row.appendChild(document.createTextNode(`${f.label}${f.required?' *':''}`));
+        } else {
+          row = document.createElement('div');
+          row.innerHTML = `<label class="label">${f.label} ${f.required?'<span class="text-red-600">*</span>':''}</label>`;
+          if (f.type === 'textarea') {
+            input = document.createElement('textarea');
+            input.className = 'input';
+          } else if (f.type === 'select') {
+            input = document.createElement('select');
+            input.className = 'input';
+            (f.options||[]).forEach(opt => {
+              const o = document.createElement('option');
+              o.textContent = opt;
+              input.appendChild(o);
+            });
+          } else {
+            input = document.createElement('input');
+            input.type = f.type;
+            input.className = 'input';
+          }
+          row.appendChild(input);
         }
         input.dataset.fieldId = f.id;
-        row.appendChild(input);
         signupCustomFields.appendChild(row);
       });
     }
@@ -1506,9 +1596,9 @@
       };
 
       // custom field values
-      signupCustomFields.querySelectorAll('input,select').forEach(input => {
+      signupCustomFields.querySelectorAll('input,select,textarea').forEach(input => {
         const fid = input.dataset.fieldId;
-        if (fid) p.custom[fid] = input.value;
+        if (fid) p.custom[fid] = input.type === 'checkbox' ? input.checked : input.value;
       });
 
       // files
