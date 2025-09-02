@@ -1,0 +1,14 @@
+{
+  "name": "mic-night-app",
+  "version": "1.0.0",
+  "description": "A simple web application for managing open mic events.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "echo \"No tests specified\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "Apache-2.0",
+  "type": "commonjs"
+}
