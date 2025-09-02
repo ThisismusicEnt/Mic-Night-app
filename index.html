@@ -280,7 +280,7 @@
               <div class="flex items-center justify-between mb-3">
                 <h4 class="font-semibold">Participants</h4>
                 <div class="space-x-2">
-                  <button id="btnDownloadCSV" class="btn">Download CSV</button>
+                  <button id="btnDownloadCSV" class="btn">Export Spreadsheet</button>
                   <button id="btnClearNoShow" class="btn">Mark/Filter No-Shows</button>
                 </div>
               </div>
@@ -606,12 +606,21 @@
       }
     })();
 
-    // Session state (in-memory)
+    // Session state (persisted)
     const Session = {
       admin: null,
       currentEventId: null,
       participant: null, // {eventId, id, email, name, ...}
     };
+
+    // Load session from storage
+    (() => {
+      const adminId = localStorage.getItem('session_admin');
+      if (adminId) {
+        const admin = DB.read(K.ADMINS, []).find(a => a.id === adminId);
+        if (admin) Session.admin = admin;
+      }
+    })();
 
     // Event extended data shape
     function newEvent(ownerId, data) {
@@ -774,6 +783,7 @@
       const found = admins.find(a => a.email === email && a.password === pass);
       if (!found) return toast('Invalid credentials', 'error');
       Session.admin = found;
+      localStorage.setItem('session_admin', found.id);
       showAdminApp();
       toast('Signed in.', 'success');
     };
@@ -788,6 +798,7 @@
       admins.push(admin);
       DB.write(K.ADMINS, admins);
       Session.admin = admin;
+      localStorage.setItem('session_admin', admin.id);
       showAdminApp();
       toast('Account created.', 'success');
     };
@@ -795,6 +806,7 @@
     byId('btnLogout').onclick = () => {
       Session.admin = null;
       Session.currentEventId = null;
+      localStorage.removeItem('session_admin');
        navAdmin.classList.add('hidden');
       showEvents();
       toast('Signed out.');
@@ -1078,12 +1090,16 @@
      ****************************/
     function initTabs() {
       const tabs = $$('[data-tab]');
-      tabs.forEach(btn => btn.onclick = () => {
+      const show = (btn) => {
         const id = btn.dataset.tab;
         tabs.forEach(b => b.classList.remove('tab-active'));
         btn.classList.add('tab-active');
         ['tab-participants','tab-randomizer','tab-messages','tab-files','tab-setlist','tab-djpool','tab-rewards','tab-forms','tab-vouchers']
           .forEach(tid => byId(tid).classList.toggle('hidden', tid !== id));
+      };
+      tabs.forEach(btn => {
+        btn.onclick = () => show(btn);
+        btn.ontouchstart = () => show(btn);
       });
     }
 
@@ -1824,7 +1840,11 @@
 
     // Initial view
     if (location.hash === '#admin') {
-      showAdminAuth();
+      if (Session.admin) {
+        showAdminApp();
+      } else {
+        showAdminAuth();
+      }
     } else if (location.hash.startsWith('#join=') || location.hash.startsWith('#pass=')) {
       showParticipant();
       routeParticipantFromHash();
