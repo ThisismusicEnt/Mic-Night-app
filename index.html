@@ -21,7 +21,14 @@
     .card { border:1px solid var(--accent); border-radius:1rem; padding:1rem; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,.1); }
     .grid-2 { display:grid; grid-template-columns:1fr; gap:1rem; }
     .grid-3 { display:grid; grid-template-columns:1fr; gap:1rem; }
-    @media (min-width:768px) { .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))} .grid-3{grid-template-columns:repeat(3,minmax(0,1fr))} }
+    @media (min-width:640px) {
+      .grid-2 { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .grid-3 { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .card { padding:1.5rem; }
+    }
+    @media (min-width:1024px) {
+      .grid-3 { grid-template-columns:repeat(3,minmax(0,1fr)); }
+    }
     .pill { border:1px solid var(--accent); border-radius:9999px; padding:.125rem .5rem; font-size:.75rem; font-weight:600; color:var(--accent); background:#fff; }
     .tab { padding:.5rem .75rem; border:1px solid var(--accent); border-radius:.75rem; background:#fff; color:var(--accent); cursor:pointer; transition: background .2s, color .2s; }
     .tab:hover { background:var(--accent); color:#fff; }
@@ -45,7 +52,7 @@
         <div class="w-8 h-8 rounded-lg bg-blue-600 text-white grid place-items-center font-bold">SF</div>
         <div class="font-semibold">ShowFlow</div>
       </div>
-      <nav class="w-full sm:w-auto flex flex-wrap items-center gap-2 mt-2 sm:mt-0 sm:ml-auto">
+      <nav class="w-full sm:w-auto flex flex-nowrap overflow-x-auto items-center gap-2 mt-2 sm:mt-0 sm:ml-auto">
         <button id="navAdmin" class="tab">Admin</button>
         <button id="navParticipant" class="tab">Participant</button>
         <span class="text-blue-600">|</span>
