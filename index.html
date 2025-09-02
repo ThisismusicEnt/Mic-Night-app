@@ -6,6 +6,11 @@
   <title>ShowFlow — Events, Randomizer & Signups (Single-File)</title>
   <meta name="description" content="All-in-one, single-file event manager for open mics, comedy shows, raffles, and random drawings. Admin + Participant dashboards, QR signups, files, messages, analytics." />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='128' height='128' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.5'%3E%3Cpath d='M4 4h16v16H4z'/%3E%3Cpath d='M7 7h10v3H7zM7 12h10v5H7z'/%3E%3C/svg%3E" />
+  <script>
+    if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    }
+  </script>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     html, body { height: 100%; }
@@ -32,11 +37,24 @@
     .kbd { display:inline-block; border:1px solid #e5e7eb; border-radius:.375rem; padding:0 .25rem; font-size:.75rem; background:#f9fafb; }
     .divider { height:1px; background:#e5e7eb; margin:1rem 0; }
     .hidden { display:none !important; }
+    html.dark body { background:#1f2937; color:#f9fafb; }
+    html.dark .card { background:#374151; border-color:#4b5563; color:#f3f4f6; }
+    html.dark .btn { border-color:#4b5563; }
+    html.dark .btn:hover { border-color:#6b7280; }
+    html.dark .btn-primary { background:#2563eb; border-color:#2563eb; }
+    html.dark .btn-primary:hover { background:#1d4ed8; }
+    html.dark .btn-danger { background:#dc2626; }
+    html.dark .btn-danger:hover { background:#b91c1c; }
+    html.dark .tab { border-color:#4b5563; }
+    html.dark .tab-active { background:#2563eb; border-color:#2563eb; color:#fff; }
+    html.dark .input { border-color:#4b5563; background:#1f2937; color:#f9fafb; }
+    html.dark .input:focus { box-shadow:0 0 0 2px #60a5fa; border-color:#3b82f6; }
+    html.dark .divider { background:#4b5563; }
   </style>
 </head>
-<body class="min-h-full bg-gradient-to-br from-gray-50 to-gray-100 text-gray-900">
+<body class="min-h-full bg-gradient-to-br from-gray-50 to-gray-100 text-gray-900 dark:from-gray-900 dark:to-gray-800 dark:text-gray-100">
   <!-- Header -->
-  <header class="sticky top-0 z-40 bg-white/80 backdrop-blur border-b">
+  <header class="sticky top-0 z-40 bg-white/80 dark:bg-gray-900/80 backdrop-blur border-b border-gray-200 dark:border-gray-700">
     <div class="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3">
       <div class="flex items-center gap-2">
         <div class="w-8 h-8 rounded-lg bg-black text-white grid place-items-center font-bold">SF</div>
@@ -51,6 +69,7 @@
           <input id="importInput" type="file" accept="application/json" class="hidden" />
           Import
         </label>
+        <button id="navTheme" class="tab" title="Toggle dark mode">🌓</button>
       </nav>
     </div>
   </header>
@@ -649,6 +668,7 @@
     const navParticipant = byId('navParticipant');
     const viewAdminAuth = byId('viewAdminAuth');
     const viewAdminApp  = byId('viewAdminApp');
+    const navTheme = byId('navTheme');
     const viewParticipant = byId('viewParticipant');
 
     function showAdminAuth() {
@@ -679,6 +699,10 @@
     navParticipant.onclick = () => {
       showParticipant();
       routeParticipantFromHash();
+    };
+    navTheme.onclick = () => {
+      const dark = document.documentElement.classList.toggle('dark');
+      localStorage.theme = dark ? 'dark' : 'light';
     };
 
     /****************************
