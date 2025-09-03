@@ -53,7 +53,7 @@
         <div class="font-semibold">ShowFlow</div>
       </div>
       <nav class="w-full sm:w-auto flex flex-nowrap overflow-x-auto overflow-y-visible items-center gap-2 mt-2 sm:mt-0 sm:ml-auto">
-        <button id="navAdmin" class="tab hidden">Admin</button>
+        <button id="navAdmin" class="tab">Admin</button>
         <button id="navParticipant" class="tab">Participant</button>
         <button id="navEvents" class="tab">Events</button>
         <div id="adminTools" class="relative hidden">
@@ -768,7 +768,6 @@
       viewAdminApp.classList.add('hidden');
       viewParticipant.classList.remove('hidden');
       viewEvents.classList.add('hidden');
-      if (!Session.admin) navAdmin.classList.add('hidden');
       navAdmin.classList.remove('tab-active');
       navParticipant.classList.add('tab-active');
       navEvents.classList.remove('tab-active');
@@ -781,7 +780,6 @@
       viewAdminApp.classList.add('hidden');
       viewParticipant.classList.add('hidden');
       viewEvents.classList.remove('hidden');
-      if (!Session.admin) navAdmin.classList.add('hidden');
       navAdmin.classList.remove('tab-active');
       navParticipant.classList.remove('tab-active');
       navEvents.classList.add('tab-active');
@@ -847,7 +845,6 @@
       Session.admin = null;
       Session.currentEventId = null;
       localStorage.removeItem('session_admin');
-      navAdmin.classList.add('hidden');
       adminTools.classList.add('hidden');
       toolsMenu.classList.add('hidden');
       showEvents();
