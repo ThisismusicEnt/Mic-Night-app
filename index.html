@@ -52,33 +52,30 @@
         <div class="w-8 h-8 rounded-lg bg-blue-600 text-white grid place-items-center font-bold">SF</div>
         <div class="font-semibold">ShowFlow</div>
       </div>
-      <nav class="w-full sm:w-auto flex flex-nowrap overflow-x-auto overflow-y-visible items-center gap-2 mt-2 sm:mt-0 sm:ml-auto">
-        <button id="navAdmin" class="tab">Admin</button>
-        <button id="navParticipant" class="tab">Participant</button>
-        <button id="navEvents" class="tab">Events</button>
-        <div id="adminTools" class="relative hidden">
-          <button id="navTools" class="tab">Tools ▾</button>
-          <div id="toolsMenu" class="hidden absolute right-0 mt-1 card flex flex-col gap-2 max-h-60 overflow-y-auto">
-            <button id="navParticipants" class="tab w-full text-left hidden" data-tab="tab-participants">Participants</button>
-            <button id="navRandomizer" class="tab w-full text-left hidden" data-tab="tab-randomizer">Randomizer</button>
-            <button id="navMessages" class="tab w-full text-left hidden" data-tab="tab-messages">Messenger</button>
-            <button id="navFiles" class="tab w-full text-left hidden" data-tab="tab-files">Files</button>
-            <button id="navSetlist" class="tab w-full text-left hidden" data-tab="tab-setlist">Set List</button>
-            <button id="navDJPool" class="tab w-full text-left hidden" data-tab="tab-djpool">DJ Requests</button>
-            <button id="navRewards" class="tab w-full text-left hidden" data-tab="tab-rewards">Rewards</button>
-            <button id="navForms" class="tab w-full text-left hidden" data-tab="tab-forms">Form Generator</button>
-            <button id="navVouchers" class="tab w-full text-left hidden" data-tab="tab-vouchers">Vouchers</button>
-            <div class="border-t border-blue-600"></div>
-            <button id="navExport" class="tab w-full text-left" title="Export all data">Export</button>
-            <label class="tab w-full text-left cursor-pointer" title="Import a previously exported JSON">
+        <nav class="w-full sm:w-auto flex flex-nowrap overflow-x-auto overflow-y-visible items-center gap-2 mt-2 sm:mt-0 sm:ml-auto">
+          <button id="navAdmin" class="tab">Admin</button>
+          <button id="navParticipant" class="tab">Participant</button>
+          <button id="navEvents" class="tab">Events</button>
+          <div id="adminTools" class="flex flex-nowrap items-center gap-2 hidden">
+            <button id="navParticipants" class="tab hidden" data-tab="tab-participants">Participants</button>
+            <button id="navRandomizer" class="tab hidden" data-tab="tab-randomizer">Randomizer</button>
+            <button id="navMessages" class="tab hidden" data-tab="tab-messages">Messenger</button>
+            <button id="navFiles" class="tab hidden" data-tab="tab-files">Files</button>
+            <button id="navSetlist" class="tab hidden" data-tab="tab-setlist">Set List</button>
+            <button id="navDJPool" class="tab hidden" data-tab="tab-djpool">DJ Requests</button>
+            <button id="navRewards" class="tab hidden" data-tab="tab-rewards">Rewards</button>
+            <button id="navForms" class="tab hidden" data-tab="tab-forms">Form Generator</button>
+            <button id="navVouchers" class="tab hidden" data-tab="tab-vouchers">Vouchers</button>
+            <div class="border-l border-blue-600 h-6"></div>
+            <button id="navExport" class="tab" title="Export all data">Export</button>
+            <label class="tab cursor-pointer" title="Import a previously exported JSON">
               <input id="importInput" type="file" accept="application/json" class="hidden" />
               Import
             </label>
           </div>
-        </div>
-      </nav>
-    </div>
-  </header>
+        </nav>
+      </div>
+    </header>
 
   <main class="max-w-7xl mx-auto p-4 space-y-6">
     <!-- System banners -->
@@ -691,8 +688,6 @@
     const navAdmin = byId('navAdmin');
     const navParticipant = byId('navParticipant');
     const navEvents = byId('navEvents');
-    const navTools = byId('navTools');
-    const toolsMenu = byId('toolsMenu');
     const adminTools = byId('adminTools');
     const navParticipantsTab = byId('navParticipants');
     const navRandomizerTab = byId('navRandomizer');
@@ -720,7 +715,6 @@
         b.classList.add('hidden');
         b.classList.remove('tab-active');
       });
-      toolsMenu.classList.add('hidden');
       if (Session.admin) adminTools.classList.remove('hidden');
       else adminTools.classList.add('hidden');
     }
@@ -797,13 +791,6 @@
     navEvents.onclick = () => {
       showEvents();
     };
-    navTools.onclick = (e) => {
-      e.stopPropagation();
-      toolsMenu.classList.toggle('hidden');
-    };
-    document.addEventListener('click', (e) => {
-      if (!adminTools.contains(e.target)) toolsMenu.classList.add('hidden');
-    });
     byId('btnLandingAdmin').onclick = () => {
       location.hash = '#admin';
     };
@@ -845,8 +832,7 @@
       Session.admin = null;
       Session.currentEventId = null;
       localStorage.removeItem('session_admin');
-      adminTools.classList.add('hidden');
-      toolsMenu.classList.add('hidden');
+        adminTools.classList.add('hidden');
       showEvents();
       toast('Signed out.');
     };
@@ -1140,7 +1126,6 @@
         const id = btn.dataset.tab;
         tabs.forEach(b => b.classList.remove('tab-active'));
         btn.classList.add('tab-active');
-        toolsMenu.classList.add('hidden');
         ['tab-participants','tab-randomizer','tab-messages','tab-files','tab-setlist','tab-djpool','tab-rewards','tab-forms','tab-vouchers']
           .forEach(tid => {
             const el = byId(tid);
