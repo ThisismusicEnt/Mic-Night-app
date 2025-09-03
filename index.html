@@ -44,6 +44,11 @@
     .kbd { display:inline-block; border:1px solid var(--accent); border-radius:.375rem; padding:0 .25rem; font-size:.75rem; background:#1e293b; color:#e2e8f0; }
     .divider { height:1px; background:var(--accent); margin:1rem 0; }
     .hidden { display:none !important; }
+    #adminTools { position:fixed; bottom:0; left:0; width:100%; z-index:50; background:#1e293b; border-top:1px solid var(--accent); padding:.5rem 0; display:flex; justify-content:space-around; }
+    #adminTools .tab { border:none; border-radius:0; background:transparent; padding:.25rem 0; flex-direction:column; align-items:center; color:var(--accent); flex:1; }
+    #adminTools .tab span { font-size:.65rem; margin-top:.25rem; }
+    #adminTools .tab .icon { font-size:1.25rem; line-height:1; }
+    #viewAdminApp { padding-bottom:4rem; }
   </style>
 </head>
   <body class="min-h-full">
@@ -58,23 +63,6 @@
           <button id="navAdmin" class="tab">Admin</button>
           <button id="navParticipant" class="tab">Participant</button>
           <button id="navEvents" class="tab">Events</button>
-          <div id="adminTools" class="flex flex-nowrap items-center gap-2 hidden">
-            <button id="navParticipants" class="tab hidden" data-tab="tab-participants">Participants</button>
-            <button id="navRandomizer" class="tab hidden" data-tab="tab-randomizer">Randomizer</button>
-            <button id="navMessages" class="tab hidden" data-tab="tab-messages">Messenger</button>
-            <button id="navFiles" class="tab hidden" data-tab="tab-files">Files</button>
-            <button id="navSetlist" class="tab hidden" data-tab="tab-setlist">Set List</button>
-            <button id="navDJPool" class="tab hidden" data-tab="tab-djpool">DJ Requests</button>
-            <button id="navRewards" class="tab hidden" data-tab="tab-rewards">Rewards</button>
-            <button id="navForms" class="tab hidden" data-tab="tab-forms">Form Generator</button>
-            <button id="navVouchers" class="tab hidden" data-tab="tab-vouchers">Vouchers</button>
-            <div class="border-l border-purple-600 h-6"></div>
-            <button id="navExport" class="tab" title="Export all data">Export</button>
-            <label class="tab cursor-pointer" title="Import a previously exported JSON">
-              <input id="importInput" type="file" accept="application/json" class="hidden" />
-              Import
-            </label>
-          </div>
         </nav>
       </div>
     </header>
@@ -225,7 +213,7 @@
       </div>
 
       <!-- Event Dashboard -->
-      <div id="eventDashboard" class="hidden card">
+      <div id="eventDashboard" class="hidden">
         <div class="flex items-center justify-between flex-wrap gap-2">
           <div>
             <h3 id="edTitle" class="font-semibold text-lg">Event</h3>
@@ -563,6 +551,54 @@
       <div id="publicEventsList" class="mt-3 space-y-2"></div>
     </section>
   </main>
+
+  <nav id="adminTools" class="hidden">
+    <button id="navParticipants" class="tab hidden" data-tab="tab-participants">
+      <span class="icon">👥</span>
+      <span>Participants</span>
+    </button>
+    <button id="navRandomizer" class="tab hidden" data-tab="tab-randomizer">
+      <span class="icon">🎲</span>
+      <span>Randomizer</span>
+    </button>
+    <button id="navMessages" class="tab hidden" data-tab="tab-messages">
+      <span class="icon">💬</span>
+      <span>Messages</span>
+    </button>
+    <button id="navFiles" class="tab hidden" data-tab="tab-files">
+      <span class="icon">📁</span>
+      <span>Files</span>
+    </button>
+    <button id="navSetlist" class="tab hidden" data-tab="tab-setlist">
+      <span class="icon">🎵</span>
+      <span>Setlist</span>
+    </button>
+    <button id="navDJPool" class="tab hidden" data-tab="tab-djpool">
+      <span class="icon">🎧</span>
+      <span>DJ</span>
+    </button>
+    <button id="navRewards" class="tab hidden" data-tab="tab-rewards">
+      <span class="icon">🏆</span>
+      <span>Rewards</span>
+    </button>
+    <button id="navForms" class="tab hidden" data-tab="tab-forms">
+      <span class="icon">📝</span>
+      <span>Forms</span>
+    </button>
+    <button id="navVouchers" class="tab hidden" data-tab="tab-vouchers">
+      <span class="icon">🎟️</span>
+      <span>Vouchers</span>
+    </button>
+    <button id="navExport" class="tab" title="Export all data">
+      <span class="icon">⬇️</span>
+      <span>Export</span>
+    </button>
+    <label class="tab cursor-pointer" title="Import a previously exported JSON">
+      <span class="icon">⬆️</span>
+      <span>Import</span>
+      <input id="importInput" type="file" accept="application/json" class="hidden" />
+    </label>
+  </nav>
 
   <footer class="max-w-7xl mx-auto px-4 py-8 text-xs text-gray-300">
     <div>ShowFlow single-file prototype. Data is stored locally in your browser (localStorage). For production, wire to your backend/payments and auth.</div>
