@@ -44,10 +44,12 @@
     .kbd { display:inline-block; border:1px solid var(--accent); border-radius:.375rem; padding:0 .25rem; font-size:.75rem; background:#1e293b; color:#e2e8f0; }
     .divider { height:1px; background:var(--accent); margin:1rem 0; }
     .hidden { display:none !important; }
-    #adminTools { position:fixed; bottom:0; left:0; width:100%; z-index:50; background:#1e293b; border-top:1px solid var(--accent); padding:.5rem 0; display:flex; justify-content:space-around; }
-    #adminTools .tab { border:none; border-radius:0; background:transparent; padding:.25rem 0; flex-direction:column; align-items:center; color:var(--accent); flex:1; }
-    #adminTools .tab span { font-size:.65rem; margin-top:.25rem; }
-    #adminTools .tab .icon { font-size:1.25rem; line-height:1; }
+    #adminTools { position:fixed; bottom:0; left:0; width:100%; z-index:50; background:#1e293b; border-top:1px solid var(--accent); padding:.5rem 0; display:flex; justify-content:center; }
+    #btnToolMenu { width:3rem; height:3rem; border-radius:9999px; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.5rem; }
+    #toolPicker { position:fixed; bottom:4.5rem; left:50%; transform:translateX(-50%); width:10rem; height:10rem; z-index:60; pointer-events:none; }
+    #toolPicker.open { pointer-events:auto; }
+    #toolPicker .tool { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:3rem; height:3rem; border-radius:9999px; background:#1e293b; border:1px solid var(--accent); display:flex; align-items:center; justify-content:center; font-size:1.25rem; color:var(--accent); }
+    #toolPicker .tool:hover { background:var(--accent); color:#fff; }
     #viewAdminApp { padding-bottom:4rem; }
   </style>
 </head>
@@ -553,52 +555,24 @@
   </main>
 
   <nav id="adminTools" class="hidden">
-    <button id="navParticipants" class="tab hidden" data-tab="tab-participants">
-      <span class="icon">👥</span>
-      <span>Participants</span>
-    </button>
-    <button id="navRandomizer" class="tab hidden" data-tab="tab-randomizer">
-      <span class="icon">🎲</span>
-      <span>Randomizer</span>
-    </button>
-    <button id="navMessages" class="tab hidden" data-tab="tab-messages">
-      <span class="icon">💬</span>
-      <span>Messages</span>
-    </button>
-    <button id="navFiles" class="tab hidden" data-tab="tab-files">
-      <span class="icon">📁</span>
-      <span>Files</span>
-    </button>
-    <button id="navSetlist" class="tab hidden" data-tab="tab-setlist">
-      <span class="icon">🎵</span>
-      <span>Setlist</span>
-    </button>
-    <button id="navDJPool" class="tab hidden" data-tab="tab-djpool">
-      <span class="icon">🎧</span>
-      <span>DJ</span>
-    </button>
-    <button id="navRewards" class="tab hidden" data-tab="tab-rewards">
-      <span class="icon">🏆</span>
-      <span>Rewards</span>
-    </button>
-    <button id="navForms" class="tab hidden" data-tab="tab-forms">
-      <span class="icon">📝</span>
-      <span>Forms</span>
-    </button>
-    <button id="navVouchers" class="tab hidden" data-tab="tab-vouchers">
-      <span class="icon">🎟️</span>
-      <span>Vouchers</span>
-    </button>
-    <button id="navExport" class="tab" title="Export all data">
-      <span class="icon">⬇️</span>
-      <span>Export</span>
-    </button>
-    <label class="tab cursor-pointer" title="Import a previously exported JSON">
-      <span class="icon">⬆️</span>
-      <span>Import</span>
+    <button id="btnToolMenu"><span class="icon">➕</span></button>
+  </nav>
+
+  <div id="toolPicker" class="hidden">
+    <button id="navParticipants" class="tool hidden" data-tab="tab-participants" title="Participants">👥</button>
+    <button id="navRandomizer" class="tool hidden" data-tab="tab-randomizer" title="Randomizer">🎲</button>
+    <button id="navMessages" class="tool hidden" data-tab="tab-messages" title="Messages">💬</button>
+    <button id="navFiles" class="tool hidden" data-tab="tab-files" title="Files">📁</button>
+    <button id="navSetlist" class="tool hidden" data-tab="tab-setlist" title="Setlist">🎵</button>
+    <button id="navDJPool" class="tool hidden" data-tab="tab-djpool" title="DJ">🎧</button>
+    <button id="navRewards" class="tool hidden" data-tab="tab-rewards" title="Rewards">🏆</button>
+    <button id="navForms" class="tool hidden" data-tab="tab-forms" title="Forms">📝</button>
+    <button id="navVouchers" class="tool hidden" data-tab="tab-vouchers" title="Vouchers">🎟️</button>
+    <button id="navExport" class="tool" title="Export all data">⬇️</button>
+    <label id="navImport" class="tool cursor-pointer" title="Import a previously exported JSON">⬆️
       <input id="importInput" type="file" accept="application/json" class="hidden" />
     </label>
-  </nav>
+  </div>
 
   <footer class="max-w-7xl mx-auto px-4 py-8 text-xs text-gray-300">
     <div>ShowFlow single-file prototype. Data is stored locally in your browser (localStorage). For production, wire to your backend/payments and auth.</div>
@@ -727,6 +701,8 @@
     const navParticipant = byId('navParticipant');
     const navEvents = byId('navEvents');
     const adminTools = byId('adminTools');
+    const btnToolMenu = byId('btnToolMenu');
+    const toolPicker = byId('toolPicker');
     const navParticipantsTab = byId('navParticipants');
     const navRandomizerTab = byId('navRandomizer');
     const navMessagesTab = byId('navMessages');
@@ -747,6 +723,24 @@
     const viewEvents = byId('viewEvents');
     const tabEvents = byId('tabEvents');
     const tabCreate = byId('tabCreate');
+
+    function layoutToolPicker() {
+      const buttons = Array.from(toolPicker.querySelectorAll('.tool:not(.hidden)'));
+      const r = 80;
+      const start = -Math.PI / 2;
+      const step = (Math.PI * 2) / (buttons.length || 1);
+      buttons.forEach((btn, i) => {
+        const angle = start + i * step;
+        btn.style.transform = `translate(-50%, -50%) translate(${r * Math.cos(angle)}px, ${r * Math.sin(angle)}px)`;
+      });
+    }
+
+    btnToolMenu.onclick = () => {
+      toolPicker.classList.toggle('hidden');
+      toolPicker.classList.toggle('open');
+      layoutToolPicker();
+    };
+    btnToolMenu.ontouchstart = btnToolMenu.onclick;
 
     function hideEventTabs() {
       eventNavTabs.forEach(b => {
@@ -1171,6 +1165,8 @@
             if (tid === id) el.classList.remove('hidden');
             else el.classList.add('hidden');
           });
+        toolPicker.classList.add('hidden');
+        toolPicker.classList.remove('open');
       };
       tabs.forEach(btn => {
         btn.onclick = () => show(btn);
@@ -1872,13 +1868,21 @@
     /****************************
      * EXPORT / IMPORT (GLOBAL)
      ****************************/
-    byId('navExport').onclick = () => {
+    const navExport = byId('navExport');
+    const navImport = byId('navImport');
+    navExport.onclick = () => {
       const dump = {
         admins: DB.read(K.ADMINS, []),
         events: DB.read(K.EVENTS, []),
         blobs: DB.read(K.EVENTS, []).map(e => loadEvent(e.id))
       };
       download(`showflow_backup_${Date.now()}.json`, JSON.stringify(dump));
+      toolPicker.classList.add('hidden');
+      toolPicker.classList.remove('open');
+    };
+    navImport.onclick = () => {
+      toolPicker.classList.add('hidden');
+      toolPicker.classList.remove('open');
     };
     byId('importInput').onchange = async (e) => {
       const f = e.target.files[0];
