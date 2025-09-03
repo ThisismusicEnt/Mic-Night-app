@@ -56,6 +56,15 @@
         <button id="navAdmin" class="tab hidden">Admin</button>
         <button id="navParticipant" class="tab">Participant</button>
         <button id="navEvents" class="tab">Events</button>
+        <button id="navParticipants" class="tab hidden" data-tab="tab-participants">Participants</button>
+        <button id="navRandomizer" class="tab hidden" data-tab="tab-randomizer">Randomizer</button>
+        <button id="navMessages" class="tab hidden" data-tab="tab-messages">Messenger</button>
+        <button id="navFiles" class="tab hidden" data-tab="tab-files">Files</button>
+        <button id="navSetlist" class="tab hidden" data-tab="tab-setlist">Set List</button>
+        <button id="navDJPool" class="tab hidden" data-tab="tab-djpool">DJ Requests</button>
+        <button id="navRewards" class="tab hidden" data-tab="tab-rewards">Rewards</button>
+        <button id="navForms" class="tab hidden" data-tab="tab-forms">Form Generator</button>
+        <button id="navVouchers" class="tab hidden" data-tab="tab-vouchers">Vouchers</button>
         <span class="text-blue-600">|</span>
         <button id="navExport" class="tab" title="Export all data">Export</button>
         <label class="tab cursor-pointer" title="Import a previously exported JSON">
@@ -261,20 +270,8 @@
             </div>
           </div>
 
-          <!-- Right column: Tabs -->
+          <!-- Right column: Event sections -->
           <div class="lg:col-span-3 space-y-4 order-1 lg:order-2">
-            <div class="flex flex-wrap gap-2 sticky top-0 bg-gray-50 py-2 z-10">
-              <button data-tab="tab-participants" class="tab tab-active">Participants</button>
-              <button data-tab="tab-randomizer" class="tab">Randomizer</button>
-              <button data-tab="tab-messages" class="tab">Messenger</button>
-              <button data-tab="tab-files" class="tab">Files</button>
-              <button data-tab="tab-setlist" class="tab">Set List</button>
-              <button data-tab="tab-djpool" class="tab">DJ Requests</button>
-              <button data-tab="tab-rewards" class="tab">Rewards</button>
-              <button data-tab="tab-forms" class="tab">Form Generator</button>
-              <button data-tab="tab-vouchers" class="tab">Vouchers</button>
-            </div>
-
             <!-- Participants Table -->
             <div id="tab-participants" class="card">
               <div class="flex items-center justify-between mb-3">
@@ -689,6 +686,19 @@
     const navAdmin = byId('navAdmin');
     const navParticipant = byId('navParticipant');
     const navEvents = byId('navEvents');
+    const navParticipantsTab = byId('navParticipants');
+    const navRandomizerTab = byId('navRandomizer');
+    const navMessagesTab = byId('navMessages');
+    const navFilesTab = byId('navFiles');
+    const navSetlistTab = byId('navSetlist');
+    const navDJPoolTab = byId('navDJPool');
+    const navRewardsTab = byId('navRewards');
+    const navFormsTab = byId('navForms');
+    const navVouchersTab = byId('navVouchers');
+    const eventNavTabs = [
+      navParticipantsTab, navRandomizerTab, navMessagesTab, navFilesTab,
+      navSetlistTab, navDJPoolTab, navRewardsTab, navFormsTab, navVouchersTab
+    ];
     const viewLanding = byId('viewLanding');
     const viewAdminAuth = byId('viewAdminAuth');
     const viewAdminApp  = byId('viewAdminApp');
@@ -696,6 +706,13 @@
     const viewEvents = byId('viewEvents');
     const tabEvents = byId('tabEvents');
     const tabCreate = byId('tabCreate');
+
+    function hideEventTabs() {
+      eventNavTabs.forEach(b => {
+        b.classList.add('hidden');
+        b.classList.remove('tab-active');
+      });
+    }
 
     function showLanding() {
       viewLanding.classList.remove('hidden');
@@ -706,6 +723,7 @@
       navAdmin.classList.remove('tab-active');
       navParticipant.classList.remove('tab-active');
       navEvents.classList.remove('tab-active');
+      hideEventTabs();
     }
 
     function showAdminAuth() {
@@ -718,6 +736,7 @@
       navAdmin.classList.add('tab-active');
       navParticipant.classList.remove('tab-active');
       navEvents.classList.remove('tab-active');
+      hideEventTabs();
     }
     function showAdminApp() {
       navAdmin.classList.remove('hidden');
@@ -729,6 +748,7 @@
       navAdmin.classList.add('tab-active');
       navParticipant.classList.remove('tab-active');
       navEvents.classList.remove('tab-active');
+      hideEventTabs();
       showAdminEventsPage();
     }
     function showParticipant() {
@@ -741,6 +761,7 @@
       navAdmin.classList.remove('tab-active');
       navParticipant.classList.add('tab-active');
       navEvents.classList.remove('tab-active');
+      hideEventTabs();
     }
 
     function showEvents() {
@@ -754,6 +775,7 @@
       navParticipant.classList.remove('tab-active');
       navEvents.classList.add('tab-active');
       renderPublicEvents();
+      hideEventTabs();
     }
 
     navAdmin.onclick = () => {
@@ -861,6 +883,7 @@
       eventDashboard.classList.add('hidden');
       tabEvents.classList.add('tab-active');
       tabCreate.classList.remove('tab-active');
+      hideEventTabs();
       renderAdminApp();
     }
 
@@ -870,6 +893,7 @@
       adminCreatePage.classList.remove('hidden');
       tabCreate.classList.add('tab-active');
       tabEvents.classList.remove('tab-active');
+      hideEventTabs();
     }
     
     tabEvents.onclick = showAdminEventsPage;
@@ -1001,6 +1025,9 @@
       if (!ev) return toast('Event not found', 'error');
       Session.currentEventId = id;
       eventDashboard.classList.remove('hidden');
+      eventNavTabs.forEach(b => b.classList.remove('hidden'));
+      eventNavTabs.forEach(b => b.classList.remove('tab-active'));
+      navParticipantsTab.classList.add('tab-active');
       // Title
       edTitle.textContent = ev.name;
       edSubtitle.textContent = `${new Date(ev.date).toLocaleString()} • ${ev.venue || '—'} • ${ev.rules || ''}`;
@@ -1014,6 +1041,7 @@
       renderParticipants(ev);
       // Tabs
       initTabs();
+      document.querySelector('[data-tab="tab-participants"]').click();
       // Fill selects
       refreshSelects(ev);
       // Files grid
